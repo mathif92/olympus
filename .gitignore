@@ -1,8 +1,13 @@
 .claude*
 amphora/amphora
+amphora/storage/
 paramdora/paramdora
 hephaestus/hephaestus
 orpheus/orpheus
 clio/clio
 mneme/mneme
 iris/iris
+console/console
+console/web/
+web/node_modules/
+web/tsconfig.tsbuildinfo
