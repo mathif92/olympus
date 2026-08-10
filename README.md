@@ -27,6 +27,9 @@ Olympus provides the classic building blocks of a cloud, one service at a time:
 - **Cache in memory** — Mneme, an ElastiCache-equivalent managed-cache control
   plane with engine/node-type catalogs and point-in-time snapshots (real
   provisioning via actual Redis containers).
+- **Deliver messages** — Iris, an SQS + SNS-equivalent messaging broker with
+  queues (visibility + retention), topics, queue fan-out and real webhook HTTP
+  delivery; the broker itself, so published messages survive restarts.
 
 Each service is stateless, scales horizontally, and keeps its state in
 Postgres. Internal references stay mythological (the Greek gods dwell on
@@ -42,6 +45,7 @@ Olympus; they forged, stored, and safeguarded here).
 | **orpheus** | `:8086` | `15435`   | EKS-equivalent managed Kubernetes (mock or real `kube` provisioner) | `github.com/mathif92/olympus/orpheus` |
 | **clio**    | `:8087` | `15436`   | RDS-equivalent managed relational databases (mock or real `docker` provisioner) | `github.com/mathif92/olympus/clio` |
 | **mneme**   | `:8088` | `15437`   | ElastiCache-equivalent managed in-memory caches (mock or real `docker` provisioner) | `github.com/mathif92/olympus/mneme` |
+| **iris**    | `:8089` | `15438`   | SQS + SNS-equivalent messaging broker (queues, topics, fan-out, webhooks) | `github.com/mathif92/olympus/iris` |
 
 Read the per-service README for the full API and quick-start:
 
@@ -51,6 +55,7 @@ Read the per-service README for the full API and quick-start:
 - [orpheus/README.md](orpheus/README.md)
 - [clio/README.md](clio/README.md)
 - [mneme/README.md](mneme/README.md)
+- [iris/README.md](iris/README.md)
 
 ## Shared conventions
 
@@ -78,7 +83,7 @@ Cross-cutting patterns:
 - **Stateless gateways**: services hold no session, so they scale out horizontally.
 - **Greek-mythology naming**: services are named after figures from Olympus
   (the jar, the box, the forge, the orchestra, the muse of history, the muse
-  of memory).
+  of memory, the herald of the gods).
 
 ## Repository layout
 
@@ -90,6 +95,7 @@ olympus/
   ├── orpheus/       Orpheus          – managed Kubernetes (EKS-equivalent)
   ├── clio/          Clio             – managed relational databases (RDS-equivalent)
   ├── mneme/         Mneme            – managed in-memory caches (ElastiCache-equivalent)
+  ├── iris/          Iris             – messaging broker (SQS + SNS-equivalent)
   ├── .gitignore
   └── README.md      (this file)
 ```

@@ -1,0 +1,38 @@
+@startuml
+title Iris — Component Architecture
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+package "Client" {
+    [HTTP client / SQS-style\nconsumer + SNS-style\npublisher] as Ext
+}
+
+package "Control Plane Pod (stateless)" {
+    [cmd/app/main.go\nHTTP server,\nhealth probe] as Main
+    [internal/handler\n/queues, /queue/{p}/{n}/…,\n/topics, /topic/{p}/{n}/…] as Handler
+    [pkg/service.go\nqueues, topics, subscribers,\npublish fan-out + webhook\ndelivery (retries), audit] as Service
+}
+
+package "Data Layer" {
+    database "PostgreSQL\nbroker storage:\nqueues, topics, messages,\ndeliveries" as PG
+}
+
+package "External" {
+    node "subscribed queues\n(copies of each\npublished message)" as Q
+    node "webhook endpoints\n(HTTP POST + retries)" as W
+}
+
+package "Operational" {
+    [goose migrations\n(migrations/)] as Migrations
+}
+
+Ext --> Handler : HTTP API
+Handler --> Main
+Handler --> Service
+
+Service --> PG : queues, topics, messages,\ndeliveries + audit
+Migrations --> PG : goose (auto at startup)
+Service --> Q : publish fan-out\n(new message per\nsubscribed queue)
+Service --> W : POST message body\n(up to 3 attempts,\nbackoff)
+
+@enduml

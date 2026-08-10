@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - the broker storage: queues, topics, messages and delivery history.
+  postgres:
+    image: postgres:16-alpine
+    container_name: iris-postgres
+    environment:
+      POSTGRES_USER: olympus
+      POSTGRES_PASSWORD: olympus_secret
+      POSTGRES_DB: olympus_messaging
+    ports:
+      - "15438:5432"
+    volumes:
+      - iris-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U olympus -d olympus_messaging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  iris-postgres-data:
+    driver: local
