@@ -1,0 +1,46 @@
+@startuml
+title Orpheus — Component Architecture
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+package "Client" {
+    [kubectl / HTTP client] as Ext
+}
+
+package "Control Plane Pod (stateless)" {
+    [cmd/app/main.go\nHTTP server, backend selection,\nhealth probe] as Main
+    [internal/handler\n/clusters, /nodegroups, /health] as Handler
+    [pkg/service.go\ncluster & node-group lifecycle,\nkubeconfig, audit] as Service
+    [pkg/types.go\nProvisioner interface,\nstate constants] as Types
+}
+
+package "Provisioners (pkg/)" {
+    [provisioner.go\n"mock" — in-memory,\nsynthetic endpoints (default)] as Mock
+    [k8s_provisioner.go\n"kube" — client-go,\nreal namespaces + Deployments] as Kube
+}
+
+package "Data Layer" {
+    database "PostgreSQL\nmetadata index" as PG
+    node "Target Kubernetes\n(KUBECONFIG)" as K8s
+    database "K3s (testcontainers)\nreal API server for tests" as K3sTest
+}
+
+package "Operational" {
+    [goose migrations\n(migrations/)] as Migrations
+}
+
+Ext --> Handler : HTTP API
+Handler --> Main
+Handler --> Service
+Service ..> Types : uses
+Service --> Mock
+Service --> Kube
+
+Kube --> K8s : namespaces per cluster\nnode-group Deployments
+Kube ..> K3sTest : integration tests
+Mock ..> Service : no external state
+
+Service --> PG : metadata + audit
+Migrations --> PG : goose (auto at startup)
+
+@enduml

@@ -18,6 +18,9 @@ Olympus provides the classic building blocks of a cloud, one service at a time:
 - **Run compute** — Hephaestus, an EC2-equivalent compute control plane with a
   pluggable provisioner, instance lifecycle, volumes, snapshots, key pairs and
   security groups.
+- **Manage Kubernetes** — Orpheus, an EKS-equivalent managed-Kubernetes control
+  plane with pluggable provisioning: clusters, node groups and kubeconfigs
+  (real provisioning via a live Kubernetes API).
 
 Each service is stateless, scales horizontally, and keeps its state in
 Postgres. Internal references stay mythological (the Greek gods dwell on
@@ -30,12 +33,14 @@ Olympus; they forged, stored, and safeguarded here).
 | **amphora** | `:8080`   | `15432`         | S3-compatible object storage (local/hybrid/minio backends) | `github.com/mathif92/olympus/amphora` |
 | **paramdora** | `:8083` | `15433`       | Multi-tenant parameter store with versioning + encryption | `github.com/mathif92/olympus/paramdora` |
 | **hephaestus** | `:8084` | `15434`   | EC2-equivalent compute control plane (pluggable provisioner) | `github.com/mathif92/olympus/hephaestus` |
+| **orpheus** | `:8086` | `15435`   | EKS-equivalent managed Kubernetes (mock or real `kube` provisioner) | `github.com/mathif92/olympus/orpheus` |
 
 Read the per-service README for the full API and quick-start:
 
 - [amphora/README.md](amphora/README.md)
 - [paramdora/README.md](paramdora/README.md)
 - [hephaestus/README.md](hephaestus/README.md)
+- [orpheus/README.md](orpheus/README.md)
 
 ## Shared conventions
 
@@ -62,7 +67,7 @@ Cross-cutting patterns:
 - **Audit trails**: a service-level `audit_logs` table records every operation.
 - **Stateless gateways**: services hold no session, so they scale out horizontally.
 - **Greek-mythology naming**: services are named after figures from Olympus
-  (the store, the box, the forge).
+  (the jar, the box, the forge, the orchestra).
 
 ## Repository layout
 
@@ -71,6 +76,7 @@ olympus/
   ├── amphora/       Amphora          – object storage (S3-compatible)
   ├── paramdora/     Paramdora        – parameter/secrets store
   ├── hephaestus/    Hephaestus       – compute control plane (EC2-equivalent)
+  ├── orpheus/       Orpheus          – managed Kubernetes (EKS-equivalent)
   ├── .gitignore
   └── README.md      (this file)
 ```
