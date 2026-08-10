@@ -1,0 +1,44 @@
+@startuml
+title Mneme — Component Architecture
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+package "Client" {
+    [redis-cli / HTTP client] as Ext
+}
+
+package "Control Plane Pod (stateless)" {
+    [cmd/app/main.go\nHTTP server, backend selection,\nhealth probe] as Main
+    [internal/handler\n/clusters, /snapshots, /health] as Handler
+    [pkg/service.go\ncluster & snapshot lifecycle,\naudit] as Service
+    [pkg/types.go\nProvisioner interface,\nstate constants] as Types
+}
+
+package "Provisioners (pkg/)" {
+    [provisioner.go\n"mock" — in-memory,\nsynthetic endpoints (default)] as Mock
+    [docker_provisioner.go\n"docker" — testcontainers,\nreal Redis containers] as Docker
+}
+
+package "Data Layer" {
+    database "PostgreSQL\nmetadata index" as PG
+    node "Redis engine\ndata plane (containers)\nper managed cluster" as Engine
+}
+
+package "Operational" {
+    [goose migrations\n(migrations/)] as Migrations
+}
+
+Ext --> Handler : HTTP API
+Handler --> Main
+Handler --> Service
+Service ..> Types : uses
+Service --> Mock
+Service --> Docker
+
+Docker --> Engine : one real redis container\nper cluster (SAVE -> RDB dumps)
+Mock ..> Service : no external state
+
+Service --> PG : metadata + audit
+Migrations --> PG : goose (auto at startup)
+
+@enduml

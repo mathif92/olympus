@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - relational storage for multi-tenant managed-cache state and audit log.
+  postgres:
+    image: postgres:16-alpine
+    container_name: mneme-postgres
+    environment:
+      POSTGRES_USER: olympus
+      POSTGRES_PASSWORD: olympus_secret
+      POSTGRES_DB: olympus_caches
+    ports:
+      - "15437:5432"
+    volumes:
+      - mneme-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U olympus -d olympus_caches"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mneme-postgres-data:
+    driver: local

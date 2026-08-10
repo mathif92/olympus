@@ -24,6 +24,9 @@ Olympus provides the classic building blocks of a cloud, one service at a time:
 - **Host managed databases** — Clio, an RDS-equivalent managed-relational-database
   control plane with engine/size catalogs, instance start/stop, and
   point-in-time snapshots (real provisioning via actual PostgreSQL containers).
+- **Cache in memory** — Mneme, an ElastiCache-equivalent managed-cache control
+  plane with engine/node-type catalogs and point-in-time snapshots (real
+  provisioning via actual Redis containers).
 
 Each service is stateless, scales horizontally, and keeps its state in
 Postgres. Internal references stay mythological (the Greek gods dwell on
@@ -38,6 +41,7 @@ Olympus; they forged, stored, and safeguarded here).
 | **hephaestus** | `:8084` | `15434`   | EC2-equivalent compute control plane (pluggable provisioner) | `github.com/mathif92/olympus/hephaestus` |
 | **orpheus** | `:8086` | `15435`   | EKS-equivalent managed Kubernetes (mock or real `kube` provisioner) | `github.com/mathif92/olympus/orpheus` |
 | **clio**    | `:8087` | `15436`   | RDS-equivalent managed relational databases (mock or real `docker` provisioner) | `github.com/mathif92/olympus/clio` |
+| **mneme**   | `:8088` | `15437`   | ElastiCache-equivalent managed in-memory caches (mock or real `docker` provisioner) | `github.com/mathif92/olympus/mneme` |
 
 Read the per-service README for the full API and quick-start:
 
@@ -46,6 +50,7 @@ Read the per-service README for the full API and quick-start:
 - [hephaestus/README.md](hephaestus/README.md)
 - [orpheus/README.md](orpheus/README.md)
 - [clio/README.md](clio/README.md)
+- [mneme/README.md](mneme/README.md)
 
 ## Shared conventions
 
@@ -72,7 +77,8 @@ Cross-cutting patterns:
 - **Audit trails**: a service-level `audit_logs` table records every operation.
 - **Stateless gateways**: services hold no session, so they scale out horizontally.
 - **Greek-mythology naming**: services are named after figures from Olympus
-  (the jar, the box, the forge, the orchestra, the muse of history).
+  (the jar, the box, the forge, the orchestra, the muse of history, the muse
+  of memory).
 
 ## Repository layout
 
@@ -83,6 +89,7 @@ olympus/
   ├── hephaestus/    Hephaestus       – compute control plane (EC2-equivalent)
   ├── orpheus/       Orpheus          – managed Kubernetes (EKS-equivalent)
   ├── clio/          Clio             – managed relational databases (RDS-equivalent)
+  ├── mneme/         Mneme            – managed in-memory caches (ElastiCache-equivalent)
   ├── .gitignore
   └── README.md      (this file)
 ```
