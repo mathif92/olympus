@@ -374,7 +374,7 @@ func (s *ParamStore) GetParameterHistory(ctx context.Context, accountID, project
 func (s *ParamStore) Audit(ctx context.Context, accountID, projectID, paramName, operation, status string) error {
 	_, err := s.DB.Exec(ctx, `
 		INSERT INTO audit_logs (account_id, project_id, parameter_name, operation, status)
-		VALUES ($1, $2, $3, $4, $5)`,
+		VALUES ($1, NULLIF($2, ''), $3, $4, $5)`,
 		accountID, projectID, paramName, operation, status)
 	return err
 }

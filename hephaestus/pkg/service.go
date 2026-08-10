@@ -606,7 +606,7 @@ func (h *Hephaestus) ListSecurityGroups(ctx context.Context, accountID, projectN
 func (h *Hephaestus) Audit(ctx context.Context, accountID, projectID, entity, operation, status string) error {
 	_, err := h.DB.Exec(ctx, `
 		INSERT INTO audit_logs (account_id, project_id, entity, operation, status)
-		VALUES ($1, $2, $3, $4, $5)`,
+		VALUES ($1, NULLIF($2, ''), $3, $4, $5)`,
 		accountID, projectID, entity, operation, status)
 	return err
 }
