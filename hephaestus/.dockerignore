@@ -1,0 +1,11 @@
+.git
+.gitignore
+*.md
+Dockerfile
+docker-compose.yml
+Makefile
+hephaestus
+olympus-store
+paramdora
+tests
+specs

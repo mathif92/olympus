@@ -1,0 +1,53 @@
+@startuml
+title Hephaestus — Component Architecture
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+package "Client" {
+    [HTTP client] as Ext
+}
+
+package "Hephaestus Control Plane (stateless)" {
+    [cmd/app/main.go\nHTTP server, health probe,\nmigrations on startup, PROVISIONER select] as Main
+    [internal/handler/compute.go\n/projects, /instances, /volumes,\n/snapshots, /keypairs, /security-groups] as Handler
+    [pkg/service.go\ninstance lifecycle, volumes,\nkeys, groups, audit] as Plane
+}
+
+package "Data Plane (pluggable)" {
+    [pkg.Provisioner\nLaunch, Start, Stop, Terminate, Healthy] as ProvIface
+    [MockProvisioner\nin-memory simulator\n(ships by default)] as Mock
+}
+
+package "pkg/database/" {
+    [database.Client\nPostgres pool + query helpers] as DBC
+    [migrate.go\ngoose migration runner] as Migrator
+}
+
+package "Data Layer" {
+    database "PostgreSQL\naccounts, projects, instance_types,\ninstances, volumes, snapshots,\nkey_pairs, security_groups, audit_logs" as PG
+}
+
+package "Operational" {
+    [goose migrations\n(migrations/)] as Migrations
+    [tests/integration\ntestcontainers (Postgres)] as Tests
+    [Makefile / Dockerfile\ncompose + container image] as Ops
+}
+
+Ext --> Handler : HTTP (X-Account-Id tenant)
+Handler --> Main
+Handler --> Plane
+Plane ..> ProvIface : state transitions
+Mock ..> ProvIface : implements
+ProvIface --> Mock
+Main ..> DBC
+Main ..> Migrator
+Plane --> DBC : queries
+DBC --> PG
+Migrations --> PG : goose (auto at startup)
+Migrator --> Migrations : runs SQL files
+Tests --> PG
+Tests ..> Mock : exercises control plane
+Ops ..> Main : builds/runs
+Ops ..> Handler
+
+@enduml
