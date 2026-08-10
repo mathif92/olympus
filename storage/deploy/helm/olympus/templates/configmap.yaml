@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "olympus.fullname" . }}-config
+  labels:
+    {{- include "olympus.labels" . | nindent 4 }}
+data:
+  STORAGE_BACKEND: {{ include "olympus.storageBackend" . | quote }}
+  POOL_MAX: {{ .Values.config.poolMax | quote }}
+  POOL_MIN: {{ .Values.config.poolMin | quote }}
+  POOL_TIMEOUT_MS: {{ .Values.config.poolTimeoutMs | quote }}
+  REDIS_URL: {{ .Values.redis.url | quote }}
+  {{- if .Values.minio.enabled }}
+  MINIO_ENDPOINT: {{ printf "%s-minio:%d" (include "olympus.fullname" .) (.Values.minio.service.port | int) | quote }}
+  {{- else }}
+  MINIO_ENDPOINT: {{ .Values.minio.externalEndpoint | default "minio:9000" | quote }}
+  {{- end }}
+  MINIO_BUCKET: {{ .Values.minio.bucket | quote }}
+  MINIO_REGION: {{ .Values.minio.region | quote }}
+  MINIO_USE_SSL: {{ .Values.minioUseSSL | default "0" | quote }}

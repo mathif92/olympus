@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Relational SQL database for metadata
+  # Best for: Complex queries, ACID transactions, relational data (accounts, spaces, permissions)
+  postgres:
+    image: postgres:16-alpine
+    container_name: olympus-postgres
+    environment:
+      POSTGRES_USER: olympus
+      POSTGRES_PASSWORD: olympus_secret
+      POSTGRES_DB: olympus_storage
+    ports:
+      - "15432:5432"
+    volumes:
+      - olympus-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U olympus -d olympus_storage"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis - In-memory NoSQL store for caching and session management
+  # Best for: Fast reads, caching, rate limiting, temporary storage
+  redis:
+    image: redis:7-alpine
+    container_name: olympus-redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - olympus-redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MinIO - Object storage-compatible S3 API (optional, for testing)
+  # Can replace local filesystem backend with S3-compatible storage
+  minio:
+    image: minio/minio:latest
+    container_name: olympus-minio
+    environment:
+      MINIO_ROOT_USER: olympus_admin
+      MINIO_ROOT_PASSWORD: olympus_secret_admin
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Console UI
+    volumes:
+      - olympus-minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  olympus-postgres-data:
+    driver: local
+  olympus-redis-data:
+    driver: local
+  olympus-minio-data:
+    driver: local

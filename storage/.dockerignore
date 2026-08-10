@@ -1,0 +1,9 @@
+.git
+.gitignore
+storage/data
+tests
+olympus-store
+*.md
+deploy
+docker-compose.yml
+Makefile

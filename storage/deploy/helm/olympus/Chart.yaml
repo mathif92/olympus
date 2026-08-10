@@ -1,0 +1,14 @@
+apiVersion: v2
+name: olympus
+description: OlympusStore - on-premise, S3-compatible object storage service
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - storage
+  - object-storage
+  - s3
+  - minio
+maintainers:
+  - name: Olympus Team
+    email: team@olympus.example.com

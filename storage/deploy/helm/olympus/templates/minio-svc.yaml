@@ -1,0 +1,21 @@
+{{- if .Values.minio.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "olympus.fullname" . }}-minio
+  labels:
+    app: minio
+    {{- include "olympus.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    component: minio
+  ports:
+    - name: http
+      port: {{ .Values.minio.service.port }}
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+{{- end }}

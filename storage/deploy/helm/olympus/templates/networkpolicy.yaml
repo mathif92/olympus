@@ -1,0 +1,33 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "olympus.fullname" . }}-gateway
+  labels:
+    {{- include "olympus.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "olympus.selectorLabels" . | nindent 6 }}
+      component: gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 8080
+  egress:
+    {{- if .Values.minio.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              component: minio
+      ports:
+        - port: {{ .Values.minio.service.port }}
+    {{- end }}
+    - ports:
+        - port: 5432
+        - port: 6379
+{{- end }}

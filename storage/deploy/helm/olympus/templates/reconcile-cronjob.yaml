@@ -1,0 +1,56 @@
+{{- if .Values.reconciliation.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "olympus.fullname" . }}-reconcile
+  labels:
+    {{- include "olympus.labels" . | nindent 4 }}
+    component: reconcile
+spec:
+  schedule: {{ .Values.reconciliation.schedule | quote }}
+  {{- with .Values.reconciliation.timezone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  concurrencyPolicy: {{ .Values.reconciliation.concurrencyPolicy }}
+  startingDeadlineSeconds: {{ .Values.reconciliation.startingDeadlineSeconds }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.reconciliation.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.reconciliation.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "olympus.selectorLabels" . | nindent 12 }}
+            component: reconcile
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "olympus.fullname" . | quote }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            fsGroup: 10001
+          containers:
+            - name: reconcile
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              envFrom:
+                - configMapRef:
+                    name: {{ include "olympus.fullname" . }}-config
+                - secretRef:
+                    name: {{ include "olympus.fullname" . }}-secret
+              args:
+                - -reconcile
+                {{- if .Values.reconciliation.purgeOrphans }}
+                - -reconcile-purge
+                {{- end }}
+                {{- if .Values.reconciliation.markMissing }}
+                - -reconcile-mark-missing
+                {{- end }}
+                {{- if .Values.reconciliation.repairDrift }}
+                - -reconcile-drift
+                {{- end }}
+              resources:
+                {{- toYaml .Values.reconciliation.resources | nindent 16 }}
+{{- end }}
