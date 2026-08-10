@@ -1,0 +1,10 @@
+.git
+.gitignore
+*.md
+Dockerfile
+docker-compose.yml
+Makefile
+paramdora
+olympus-store
+tests
+specs

@@ -1,0 +1,46 @@
+@startuml
+title Paramdora — Component Architecture
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+package "Client" {
+    [HTTP client] as Ext
+}
+
+package "Paramdora Service (stateless)" {
+    [cmd/app/main.go\nHTTP server, health probe,\nmigrations on startup] as Main
+    [internal/handler/parameter.go\n/projects, /parameter/{project}/{name},\n/parameters/{project}, /health] as Handler
+    [pkg/service.go\nmulti-tenant CRUD, versioning,\nhistory, audit] as Store
+    [pkg/encrypt.go\nAES-256-GCM cipher] as Cipher
+}
+
+package "pkg/database/" {
+    [database.Client\nPostgres pool + query helpers] as DBC
+    [migrate.go\ngoose migration runner] as Migrator
+}
+
+package "Data Layer" {
+    database "PostgreSQL\naccounts, projects, parameters,\nparameter_versions, audit_logs" as PG
+}
+
+package "Operational" {
+    [goose migrations\n(migrations/)] as Migrations
+    [tests/integration\ntestcontainers (Postgres)] as Tests
+    [Makefile / Dockerfile\ncompose + container image] as Ops
+}
+
+Ext --> Handler : HTTP (X-Account-Id tenant)
+Handler --> Main
+Handler --> Store
+Store ..> Cipher : secure_string encrypt/decrypt
+Main ..> DBC
+Main ..> Migrator
+Store --> DBC : queries
+DBC --> PG
+Migrations --> PG : goose (auto at startup)
+Migrator --> Migrations : runs SQL files
+Tests --> PG
+Ops ..> Main : builds/runs
+Ops ..> Handler
+
+@enduml
