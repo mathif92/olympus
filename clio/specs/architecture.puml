@@ -1,0 +1,44 @@
+@startuml
+title Clio — Component Architecture
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+
+package "Client" {
+    [psql / HTTP client] as Ext
+}
+
+package "Control Plane Pod (stateless)" {
+    [cmd/app/main.go\nHTTP server, backend selection,\nhealth probe] as Main
+    [internal/handler\n/instances, /snapshots, /health] as Handler
+    [pkg/service.go\ninstance & snapshot lifecycle,\naudit] as Service
+    [pkg/types.go\nProvisioner interface,\nstate constants] as Types
+}
+
+package "Provisioners (pkg/)" {
+    [provisioner.go\n"mock" — in-memory,\nsynthetic endpoints (default)] as Mock
+    [docker_provisioner.go\n"docker" — testcontainers,\nreal PostgreSQL containers] as Docker
+}
+
+package "Data Layer" {
+    database "PostgreSQL\nmetadata index" as PG
+    node "PostgreSQL engine\ndata plane (containers)\nper managed instance" as Engine
+}
+
+package "Operational" {
+    [goose migrations\n(migrations/)] as Migrations
+}
+
+Ext --> Handler : HTTP API
+Handler --> Main
+Handler --> Service
+Service ..> Types : uses
+Service --> Mock
+Service --> Docker
+
+Docker --> Engine : one real postgres container\nper instance (pg_dump snapshots)
+Mock ..> Service : no external state
+
+Service --> PG : metadata + audit
+Migrations --> PG : goose (auto at startup)
+
+@enduml

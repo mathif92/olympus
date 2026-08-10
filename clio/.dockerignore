@@ -1,0 +1,13 @@
+.git
+.gitignore
+*.md
+Dockerfile
+docker-compose.yml
+Makefile
+clio
+paramdora
+hephaestus
+amphora
+orpheus
+tests
+specs
