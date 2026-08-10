@@ -1,0 +1,28 @@
+Thank you for installing {{ .Chart.Name }}.
+
+The Amphora gateway is available at:
+
+{{- if .Values.ingress.enabled }}
+  Ingress:    http(s)://{{ range .Values.ingress.hosts }}{{ .host }}{{ end }}
+{{- else }}
+  ClusterIP service:  {{ include "olympus.fullname" . }}-gateway:{{ .Values.service.port }}
+  Port-forward:
+    export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "olympus.name" . }}"
+                    -o jsonpath="{.items[0].metadata.name}")
+    kubectl --namespace {{ .Release.Namespace }} port-forward "${POD_NAME}" 8080:8080
+{{- end }}
+
+Storage backend: {{ include "olympus.storageBackend" . }}
+{{- if .Values.minio.enabled }}
+
+Bundled MinIO storage-workers: {{ .Values.minio.distributedNodes }} replicas
+  API:      {{ include "olympus.fullname" . }}-minio:{{ .Values.minio.service.port }}
+  Console:  port-forward to pod {{ .Release.Name }}-{{ include "olympus.name" . }}-minio-0, port 9001
+{{- else }}
+Using external MinIO endpoint: {{ .Values.minio.externalEndpoint | default "minio:9000" }}
+{{- end }}
+{{- if .Values.reconciliation.enabled }}
+
+Scheduled reconciliation ({{ .Values.reconciliation.schedule }}):
+  kubectl get cronjobs --namespace {{ .Release.Namespace }} {{ include "olympus.fullname" . }}-reconcile
+{{- end }}

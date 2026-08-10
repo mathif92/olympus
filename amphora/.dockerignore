@@ -1,0 +1,9 @@
+.git
+.gitignore
+storage/data
+tests
+amphora
+*.md
+deploy
+docker-compose.yml
+Makefile

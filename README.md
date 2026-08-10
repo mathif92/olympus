@@ -11,7 +11,7 @@ transfers to the rest.
 
 Olympus provides the classic building blocks of a cloud, one service at a time:
 
-- **Store objects** — OlympusStore, an S3-compatible object storage service
+- **Store objects** — Amphora, an S3-compatible object storage service
   with streaming I/O and SHA-256 ETags.
 - **Hold configuration & secrets** — Paramdora, an AWS-SSM-parameter-store-style
   service with versioned parameters and AES-256-GCM encrypted secure strings.
@@ -27,13 +27,13 @@ Olympus; they forged, stored, and safeguarded here).
 
 | Service    | Port      | Postgres (host) | What it does                                          | Module                              |
 | ---------- | --------- | --------------- | ----------------------------------------------------- | ----------------------------------- |
-| **storage**| `:8080`   | `15432`         | S3-compatible object storage (local/hybrid/minio backends) | `github.com/mathif92/olympus/storage` |
+| **amphora** | `:8080`   | `15432`         | S3-compatible object storage (local/hybrid/minio backends) | `github.com/mathif92/olympus/amphora` |
 | **paramdora** | `:8083` | `15433`       | Multi-tenant parameter store with versioning + encryption | `github.com/mathif92/olympus/paramdora` |
 | **hephaestus** | `:8084` | `15434`   | EC2-equivalent compute control plane (pluggable provisioner) | `github.com/mathif92/olympus/hephaestus` |
 
 Read the per-service README for the full API and quick-start:
 
-- [storage/README.md](storage/README.md)
+- [amphora/README.md](amphora/README.md)
 - [paramdora/README.md](paramdora/README.md)
 - [hephaestus/README.md](hephaestus/README.md)
 
@@ -68,7 +68,7 @@ Cross-cutting patterns:
 
 ```
 olympus/
-  ├── storage/       OlympusStore     – object storage (S3-compatible)
+  ├── amphora/       Amphora          – object storage (S3-compatible)
   ├── paramdora/     Paramdora        – parameter/secrets store
   ├── hephaestus/    Hephaestus       – compute control plane (EC2-equivalent)
   ├── .gitignore
@@ -87,5 +87,5 @@ make run         # run the service against the local stack
 make test-it     # integration suite via testcontainers (needs Docker)
 ```
 
-Looking for design depth? `storage/specs/` has the storage replication notes,
+Looking for design depth? `amphora/specs/` has the storage replication notes,
 and each service keeps its own `specs/` folder.

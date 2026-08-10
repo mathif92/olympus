@@ -5,7 +5,7 @@ Dockerfile
 docker-compose.yml
 Makefile
 hephaestus
-olympus-store
+amphora
 paramdora
 tests
 specs

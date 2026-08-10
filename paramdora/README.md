@@ -5,7 +5,7 @@ Paramdora keeps named parameters (plain strings, string lists, and AES-256-GCM
 encrypted secure strings) in a Postgres metadata layer with full version history,
 so values can be created, updated, listed, and audited per tenant.
 
-Just like OlympusStore, tenancy is modelled as `accounts` → `projects` → `parameters`:
+Just like Amphora, tenancy is modelled as `accounts` → `projects` → `parameters`:
 
 - **accounts** – tenants; each request is scoped by the `X-Account-Id` header.
 - **projects** – named namespaces inside an account (e.g. `checkout-api`, `orders-svc`).
