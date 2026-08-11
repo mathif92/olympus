@@ -39,6 +39,7 @@ func main() {
 		"mneme":      getenv("MNEME_URL", "http://localhost:8088"),
 		"iris":       getenv("IRIS_URL", "http://localhost:8089"),
 		"themis":     getenv("THEMIS_URL", "http://localhost:8091"),
+		"prometheus": getenv("PROMETHEUS_URL", "http://localhost:8092"),
 	}
 
 	proxies := make(map[string]*httputil.ReverseProxy, len(services))

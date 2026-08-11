@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - the control plane: functions, versions, invocations, audit.
+  postgres:
+    image: postgres:16-alpine
+    container_name: prometheus-postgres
+    environment:
+      POSTGRES_USER: olympus
+      POSTGRES_PASSWORD: olympus_secret
+      POSTGRES_DB: olympus_functions
+    ports:
+      - "15440:5432"
+    volumes:
+      - prometheus-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U olympus -d olympus_functions"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  prometheus-postgres-data:
+    driver: local

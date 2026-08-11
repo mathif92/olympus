@@ -424,3 +424,55 @@ export interface TokenResponse {
   }
   expires_at: string
 }
+
+// ---- Prometheus ------------------------------------------------------------
+
+export interface PromRuntime {
+  id: string
+  name: string
+  image: string
+  handler: string
+  handler_file: string
+  handler_func: string
+  required_files: string[]
+  description: string
+}
+
+export interface PromFunction {
+  id: string
+  project_id: string
+  name: string
+  description: string
+  runtime: string
+  handler: string
+  timeout_ms: number
+  memory_mb: number
+  cpus: number
+  current_version: number
+  created_at: string
+  updated_at: string
+  status: string
+}
+
+export interface PromFunctionVersion {
+  id: string
+  function_id: string
+  version: number
+  code_sha256: string
+  code_size: number
+  is_active: boolean
+  created_at: string
+}
+
+export interface PromInvocation {
+  id: string
+  function_id: string
+  version: number
+  status: string
+  request: unknown
+  response?: string
+  error?: string
+  exit_code?: number
+  duration_ms: number
+  invoked_at: string
+}

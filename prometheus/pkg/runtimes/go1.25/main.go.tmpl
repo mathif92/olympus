@@ -1,0 +1,20 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+)
+
+// main adapts the uniform stdin/stdout contract to the user's
+// `func Handler(event string) (string, error)`. User code lives in handler.go
+// and must not define its own main or main.go.
+func main() {
+	event, _ := io.ReadAll(os.Stdin)
+	out, err := Handler(string(event))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Print(out)
+}

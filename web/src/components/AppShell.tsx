@@ -14,6 +14,7 @@ export const SERVICE_META: Record<Service, { name: string; icon: string; tagline
   mneme: { name: 'Mneme', icon: '💾', tagline: 'Caches (ElastiCache)' },
   iris: { name: 'Iris', icon: '📨', tagline: 'Messaging (SQS+SNS)' },
   themis: { name: 'Themis', icon: '⚖️', tagline: 'Identity & access (IAM)' },
+  prometheus: { name: 'Prometheus', icon: '🔥', tagline: 'Serverless functions (λ)' },
 }
 
 export default function AppShell() {

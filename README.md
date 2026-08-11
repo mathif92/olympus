@@ -34,6 +34,10 @@ Olympus provides the classic building blocks of a cloud, one service at a time:
   users/groups/roles/policies, AWS-style access keys and HS256 JWTs. Every
   service now authorizes requests against Themis (Bearer JWT + `/authorize`),
   so access is enforced per action/resource and fails closed.
+- **Run serverless functions** — Prometheus, a Lambda-equivalent service:
+  upload a code zip for one of 8 runtimes (Python, Node/JS, TypeScript, Java,
+  Go, Rust, C#/.NET, Ruby), deploy it as an immutable version, and invoke it
+  with a JSON event in a resource-constrained Docker container.
 - **Operate it all** — Console, a web console (React SPA + Go gateway) that
   drives every service from one place: single sign-through via `X-Account-Id`
   (or a Themis token), one panel per service, browsing and operating real
@@ -55,6 +59,7 @@ Olympus; they forged, stored, and safeguarded here).
 | **mneme**   | `:8088` | `15437`   | ElastiCache-equivalent managed in-memory caches (mock or real `docker` provisioner) | `github.com/mathif92/olympus/mneme` |
 | **iris**    | `:8089` | `15438`   | SQS + SNS-equivalent messaging broker (queues, topics, fan-out, webhooks) | `github.com/mathif92/olympus/iris` |
 | **themis**  | `:8091` | `15439`   | IAM: users/groups/roles/policies, access keys, JWTs, policy evaluation | `github.com/mathif92/olympus/themis` |
+| **prometheus** | `:8092` | `15440` | Serverless functions (λ): 8 Docker runtimes, zip upload, versioning, JSON-event invoke | `github.com/mathif92/olympus/prometheus` |
 | **authz**   | —       | —         | Shared library: verifies Themis JWTs and enforces `/authorize` in every service | `github.com/mathif92/olympus/authz` |
 | **console**  | `:8090` | —         | Web console: React SPA served by a Go gateway that reverse-proxies `/api/<service>/*` to every service above | `github.com/mathif92/olympus/console` |
 
@@ -68,6 +73,7 @@ Read the per-service README for the full API and quick-start:
 - [mneme/README.md](mneme/README.md)
 - [iris/README.md](iris/README.md)
 - [themis/README.md](themis/README.md)
+- [prometheus/README.md](prometheus/README.md)
 - [console/README.md](console/README.md)
 
 ## Shared conventions
@@ -116,6 +122,7 @@ olympus/
   ├── mneme/         Mneme            – managed in-memory caches (ElastiCache-equivalent)
   ├── iris/          Iris             – messaging broker (SQS + SNS-equivalent)
   ├── themis/        Themis           – IAM: identities, policies, access keys, JWTs
+  ├── prometheus/    Prometheus       – serverless functions (Lambda-equivalent)
   ├── authz/         Shared authz     – JWT verification + Themis authorize middleware
   ├── console/       Console          – web console: Go gateway (:8090) + built React SPA
   ├── web/           Console frontend – React + Vite + TypeScript source (builds into console/web/console)

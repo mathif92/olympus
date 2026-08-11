@@ -35,6 +35,8 @@ The gateway proxies by service name and strips the `/api/<service>` prefix:
 | `/api/clio/*`            | `:8087`               |
 | `/api/mneme/*`           | `:8088`               |
 | `/api/iris/*`            | `:8089`               |
+| `/api/themis/*`          | `:8091`               |
+| `/api/prometheus/*`      | `:8092`               |
 | `/api/health`            | aggregates all of the above |
 
 ## Configuration (env vars)
@@ -49,7 +51,9 @@ The gateway proxies by service name and strips the `/api/<service>` prefix:
 | `ORPHEUS_URL`  | `http://localhost:8086`            | Orpheus backend base URL                 |
 | `CLIO_URL`     | `http://localhost:8087`            | Clio backend base URL                    |
 | `MNEME_URL`    | `http://localhost:8088`            | Mneme backend base URL                   |
-| `IRIS_URL`     | `http://localhost:8089`            | Iris backend base URL                    |
+| `IRIS_URL`     | `http://localhost:8089`            | Iris backend base URL                   |
+| `THEMIS_URL`   | `http://localhost:8091`            | Themis backend base URL                 |
+| `PROMETHEUS_URL` | `http://localhost:8092`          | Prometheus backend base URL             |
 
 ## Rebuilding the SPA
 

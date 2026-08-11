@@ -2,7 +2,7 @@
 // same origin (/api/<service>/...), which the gateway reverse-proxies to each
 // backend. All control-plane services read the tenant from X-Account-Id.
 
-export type Service = 'amphora' | 'paramdora' | 'hephaestus' | 'orpheus' | 'clio' | 'mneme' | 'iris' | 'themis'
+export type Service = 'amphora' | 'paramdora' | 'hephaestus' | 'orpheus' | 'clio' | 'mneme' | 'iris' | 'themis' | 'prometheus'
 
 export const SERVICES: Service[] = [
   'amphora',
@@ -13,6 +13,7 @@ export const SERVICES: Service[] = [
   'mneme',
   'iris',
   'themis',
+  'prometheus',
 ]
 
 const TENANT_KEY = 'olympus.tenant'
@@ -86,7 +87,7 @@ interface RequestOptions {
   method?: string
   query?: Record<string, string | number | undefined>
   headers?: Record<string, string>
-  body?: string
+  body?: string | FormData
 }
 
 export async function api<T = unknown>(
@@ -102,14 +103,20 @@ export async function api<T = unknown>(
     }
   }
   const auth = getAuth()
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData
+  const hdrs: Record<string, string> = {
+    'X-Account-Id': getTenant(),
+    ...(auth ? { Authorization: `Bearer ${auth.token}` } : {}),
+    ...headers,
+  }
+  // JSON bodies get the content type automatically; multipart (FormData) must
+  // keep the boundary the browser generates, so skip it for those.
+  if (!isForm && !('Content-Type' in hdrs) && !('content-type' in hdrs)) {
+    hdrs['Content-Type'] = 'application/json'
+  }
   const res = await fetch(url.toString(), {
     method,
-    headers: {
-      'X-Account-Id': getTenant(),
-      'Content-Type': 'application/json',
-      ...(auth ? { Authorization: `Bearer ${auth.token}` } : {}),
-      ...headers,
-    },
+    headers: hdrs,
     body,
     credentials: 'same-origin',
   })
