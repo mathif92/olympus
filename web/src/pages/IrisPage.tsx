@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { Input, TextArea } from '@heroui/react'
 import { PageHeader, ProjectPicker } from '../components/PageHeader'
-import { Card, Field, Button, Modal, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
+import { Card, Field, Button, Modal, useToast, StateBadge, useAsync, EmptyState, Badge, SegmentedTabs } from '../components/ui'
 import { formatTime, CopyButton } from '../components/format'
 import type { Queue, QueueMessage, Topic, Subscriber, PublishResult } from '../api/types'
 import { api } from '../api/client'
@@ -36,12 +37,10 @@ function CreateQueue({ project, onDone }: { project: string; onDone: () => void 
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Queue name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Visibility timeout (sec)">
-          <input value={visibility} onChange={(e) => setVisibility(e.target.value)} type="number" min={0} />
-        </Field>
+        <Field label="Queue name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <Field label="Visibility timeout (sec)"><Input value={visibility} onChange={(e) => setVisibility(e.target.value)} type="number" min={0} /></Field>
       </div>
-      <Field label="Message retention (sec)"><input value={retention} onChange={(e) => setRetention(e.target.value)} type="number" min={0} /></Field>
+      <Field label="Message retention (sec)"><Input value={retention} onChange={(e) => setRetention(e.target.value)} type="number" min={0} /></Field>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
         <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create'}</Button>
@@ -76,7 +75,7 @@ function CreateTopic({ project, onDone }: { project: string; onDone: () => void 
 
   return (
     <form onSubmit={submit}>
-      <Field label="Topic name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+      <Field label="Topic name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
         <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create'}</Button>
@@ -158,10 +157,10 @@ function QueuePanel({ project, queue }: { project: string; queue: Queue }) {
       <Card title={`Send to ${queue.name}`}>
         <form onSubmit={send}>
           <Field label="Body">
-            <textarea value={sendBody} onChange={(e) => setSendBody(e.target.value)} placeholder="Message body" required />
+            <TextArea value={sendBody} onChange={(e) => setSendBody(e.target.value)} placeholder="Message body" required />
           </Field>
           <Field label="Attributes (JSON)" hint='e.g. {"type":"ci"}'>
-            <input value={attrs} onChange={(e) => setAttrs(e.target.value)} placeholder='{}' />
+            <Input value={attrs} onChange={(e) => setAttrs(e.target.value)} placeholder='{}' />
           </Field>
           <div className="row-end">
             <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Sending…' : 'Send'}</Button>
@@ -173,8 +172,8 @@ function QueuePanel({ project, queue }: { project: string; queue: Queue }) {
         title="Messages"
         actions={
           <div className="row">
-            {poller ? <Button variant="ghost" onClick={stopWatch}>Stop watch</Button> : <Button variant="ghost" onClick={watch}>Watch (5s)</Button>}
-            <Button variant="ghost" onClick={poll}>Poll now</Button>
+            {poller ? <Button variant="ghost" size="sm" onPress={stopWatch}>Stop watch</Button> : <Button variant="ghost" size="sm" onPress={watch}>Watch (5s)</Button>}
+            <Button variant="ghost" size="sm" onPress={poll}>Poll now</Button>
           </div>
         }
       >
@@ -183,7 +182,7 @@ function QueuePanel({ project, queue }: { project: string; queue: Queue }) {
         ) : messages.length === 0 ? (
           <EmptyState icon="🌙" title="No visible messages" hint="Nothing pending and visible right now." />
         ) : (
-          <table className="data">
+          <table className="data-table">
             <thead><tr><th>Id</th><th>State</th><th>Attributes</th><th>Body</th><th>Visible at</th><th className="right">Actions</th></tr></thead>
             <tbody>
               {messages.map((m) => (
@@ -194,7 +193,7 @@ function QueuePanel({ project, queue }: { project: string; queue: Queue }) {
                   <td><span className="mono">{m.body}</span></td>
                   <td className="muted">{formatTime(m.visible_at)}</td>
                   <td className="right">
-                    {m.state === 'in_flight' && <Button variant="ghost" onClick={() => ack(m)}>Ack (delete)</Button>}
+                    {m.state === 'in_flight' && <Button variant="ghost" size="sm" onPress={() => ack(m)}>Ack (delete)</Button>}
                   </td>
                 </tr>
               ))}
@@ -279,7 +278,7 @@ function TopicPanel({ project, topic }: { project: string; topic: Topic }) {
       <Card title={`Publish to ${topic.name}`}>
         <form onSubmit={publish}>
           <Field label="Message body">
-            <textarea value={publishBody} onChange={(e) => setPublishBody(e.target.value)} placeholder="Broadcast content" required />
+            <TextArea value={publishBody} onChange={(e) => setPublishBody(e.target.value)} placeholder="Broadcast content" required />
           </Field>
           <div className="row-end">
             <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Publishing…' : 'Publish'}</Button>
@@ -287,13 +286,13 @@ function TopicPanel({ project, topic }: { project: string; topic: Topic }) {
         </form>
       </Card>
       <div className="section-gap" />
-      <Card title="Subscribers" actions={<Button variant="ghost" onClick={loadSubs}>{subs ? 'Refresh' : 'Load subscribers'}</Button>}>
+      <Card title="Subscribers" actions={<Button variant="ghost" size="sm" onPress={loadSubs}>{subs ? 'Refresh' : 'Load subscribers'}</Button>}>
         {subs === null ? (
           <EmptyState icon="🔗" title="Load subscribers" hint="Attach queues (fan-out targets) or webhook URLs (HTTP push) to this topic." />
         ) : subs.length === 0 ? (
           <EmptyState icon="🔗" title="No subscribers yet" hint="Publish only fans out to subscribers; add at least one." />
         ) : (
-          <table className="data">
+          <table className="data-table">
             <thead><tr><th>Kind</th><th>Target</th><th>Status</th><th>Created</th><th className="right">Actions</th></tr></thead>
             <tbody>
               {subs.map((s) => (
@@ -302,7 +301,7 @@ function TopicPanel({ project, topic }: { project: string; topic: Topic }) {
                   <td><span className="mono">{s.kind === 'queue' ? s.queue_name : s.webhook_url}</span></td>
                   <td><StateBadge state={s.status} /></td>
                   <td className="muted">{formatTime(s.created_at)}</td>
-                  <td className="right"><Button variant="danger" onClick={() => unsubscribe(s.id)}>Unsubscribe</Button></td>
+                  <td className="right"><Button variant="danger" size="sm" onPress={() => unsubscribe(s.id)}>Unsubscribe</Button></td>
                 </tr>
               ))}
             </tbody>
@@ -310,18 +309,13 @@ function TopicPanel({ project, topic }: { project: string; topic: Topic }) {
         )}
 
         <div className="section-gap" />
-        <div className="tabs" style={{ borderBottom: 'none', marginBottom: 8 }}>
-          {(['queue', 'webhook'] as const).map((k) => (
-            <button key={k} type="button" onClick={() => setSubMode(k)} className={`tab ${subMode === k ? 'active' : ''}`} style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
-              {k}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs tabs={['queue', 'webhook']} selected={subMode} onSelect={(t) => setSubMode(t as 'queue' | 'webhook')} ariaLabel="Subscriber type" />
+        <div style={{ height: 8 }} />
         <form onSubmit={subscribe} className="row" style={{ alignItems: 'flex-start' }}>
           {subMode === 'queue' ? (
-            <input value={queueName} onChange={(e) => setQueueName(e.target.value)} placeholder="queue name" style={{ flex: 1 }} required />
+            <Input value={queueName} onChange={(e) => setQueueName(e.target.value)} placeholder="queue name" style={{ flex: 1 }} required />
           ) : (
-            <input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://example.com/hooks/iris" style={{ flex: 1 }} required />
+            <Input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://example.com/hooks/iris" style={{ flex: 1 }} required />
           )}
           <Button variant="primary" type="submit" disabled={busy}>Subscribe</Button>
         </form>
@@ -370,17 +364,13 @@ export default function IrisPage() {
   return (
     <div>
       <PageHeader icon="📨" title="Iris" tagline="Messaging broker — SQS-style queues and SNS-style topics with fan-out and webhooks.">
-        <Button variant="ghost" onClick={() => { queues.refetch(); topics.refetch() }}>Refresh</Button>
-        <Button variant="primary" disabled={!project} onClick={() => setCreating(true)}>+ {tab === 'queues' ? 'Queue' : 'Topic'}</Button>
+        <Button variant="ghost" onPress={() => { queues.refetch(); topics.refetch() }}>Refresh</Button>
+        <Button variant="primary" disabled={!project} onPress={() => setCreating(true)}>+ {tab === 'queues' ? 'Queue' : 'Topic'}</Button>
       </PageHeader>
       <ProjectPicker service={SERVICE} onSelect={setProject} />
 
-      <div className="tabs">
-        {(['queues', 'topics'] as const).map((t) => (
-          <button key={t} type="button" className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
-            {t}
-          </button>
-        ))}
+      <div className="mb-4">
+        <SegmentedTabs tabs={['queues', 'topics']} selected={tab} onSelect={(t) => setTab(t as 'queues' | 'topics')} ariaLabel="Iris resources" />
       </div>
 
       {!project && <EmptyState icon="📨" title="Select a project" hint="Choose a project to work with its queues and topics." />}
@@ -388,7 +378,7 @@ export default function IrisPage() {
       {tab === 'queues' && project && (
         <Card title={`Queues · ${project}`}>
           {queues.loading ? <p>Loading…</p> : queues.data?.length === 0 ? <EmptyState icon="📨" title="No queues" hint="Create a queue to start sending and polling messages." /> : (
-            <table className="data">
+            <table className="data-table">
               <thead><tr><th>Name</th><th>State</th><th>Visibility</th><th>Retention</th><th className="right">Actions</th></tr></thead>
               <tbody>
                 {queues.data?.map((q) => (
@@ -398,8 +388,8 @@ export default function IrisPage() {
                     <td className="num">{q.visibility_timeout_sec}s</td>
                     <td className="num">{q.message_retention_sec}s</td>
                     <td className="right">
-                      <Button variant="ghost" onClick={() => setOpenQueue(q)}>Send / Poll</Button>
-                      <Button variant="danger" onClick={() => delQueue(q.name)}>Delete</Button>
+                      <Button variant="ghost" size="sm" onPress={() => setOpenQueue(q)}>Send / Poll</Button>
+                      <Button variant="danger" size="sm" onPress={() => delQueue(q.name)}>Delete</Button>
                     </td>
                   </tr>
                 ))}
@@ -412,7 +402,7 @@ export default function IrisPage() {
       {tab === 'topics' && project && (
         <Card title={`Topics · ${project}`}>
           {topics.loading ? <p>Loading…</p> : topics.data?.length === 0 ? <EmptyState icon="📣" title="No topics" hint="Create a topic to publish and subscribe." /> : (
-            <table className="data">
+            <table className="data-table">
               <thead><tr><th>Name</th><th>State</th><th className="right">Actions</th></tr></thead>
               <tbody>
                 {topics.data?.map((t) => (
@@ -420,8 +410,8 @@ export default function IrisPage() {
                     <td><span className="mono">{t.name}</span></td>
                     <td><StateBadge state={t.state} /></td>
                     <td className="right">
-                      <Button variant="ghost" onClick={() => setOpenTopic(t)}>Publish / Subscribers</Button>
-                      <Button variant="danger" onClick={() => delTopic(t.name)}>Delete</Button>
+                      <Button variant="ghost" size="sm" onPress={() => setOpenTopic(t)}>Publish / Subscribers</Button>
+                      <Button variant="danger" size="sm" onPress={() => delTopic(t.name)}>Delete</Button>
                     </td>
                   </tr>
                 ))}
@@ -431,7 +421,7 @@ export default function IrisPage() {
         </Card>
       )}
 
-      <Modal open={creating} onClose={() => setCreating(false)} title={tab === 'queues' ? 'Create queue' : 'Create topic'} footer={<Button variant="ghost" onClick={() => setCreating(false)}>Cancel</Button>}>
+      <Modal open={creating} onClose={() => setCreating(false)} title={tab === 'queues' ? 'Create queue' : 'Create topic'} footer={<Button variant="ghost" onPress={() => setCreating(false)}>Cancel</Button>}>
         {tab === 'queues' ? <CreateQueue project={project} onDone={() => { setCreating(false); queues.refetch() }} /> : <CreateTopic project={project} onDone={() => { setCreating(false); topics.refetch() }} />}
       </Modal>
 
@@ -439,7 +429,7 @@ export default function IrisPage() {
         <Modal open wide onClose={() => setOpenQueue(null)} title={`Queue ${openQueue.name}`} footer={
           <div className="row-end">
             <CopyButton text={openQueue.id} label="Copy id" />
-            <Button variant="ghost" onClick={() => setOpenQueue(null)}>Close</Button>
+            <Button variant="ghost" onPress={() => setOpenQueue(null)}>Close</Button>
           </div>
         }>
           <QueuePanel project={project} queue={openQueue} />
@@ -450,7 +440,7 @@ export default function IrisPage() {
         <Modal open wide onClose={() => setOpenTopic(null)} title={`Topic ${openTopic.name}`} footer={
           <div className="row-end">
             <CopyButton text={openTopic.id} label="Copy id" />
-            <Button variant="ghost" onClick={() => setOpenTopic(null)}>Close</Button>
+            <Button variant="ghost" onPress={() => setOpenTopic(null)}>Close</Button>
           </div>
         }>
           <TopicPanel project={project} topic={openTopic} />

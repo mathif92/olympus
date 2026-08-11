@@ -1,17 +1,18 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { useAsync, Card, EmptyState, Spinner } from './ui'
+import { Input } from '@heroui/react'
+import { useAsync, Card, EmptyState, Spinner, SelectField, Button, Field } from './ui'
 import type { ApiProject } from '../api/types'
 import { api, type Service } from '../api/client'
 
 // PageHeader renders a service page title with its tagline.
 export function PageHeader({ icon, title, tagline, children }: { icon: string; title: string; tagline: string; children?: ReactNode }) {
   return (
-    <div className="page-head">
-      <div className="page-head-text">
-        <h1>{icon} {title}</h1>
-        <p>{tagline}</p>
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 className="m-0 text-[22px] font-semibold text-foreground">{icon} {title}</h1>
+        <p className="mt-1 mb-0 text-muted">{tagline}</p>
       </div>
-      <div className="page-head-actions">{children}</div>
+      <div className="flex gap-2">{children}</div>
     </div>
   )
 }
@@ -44,7 +45,7 @@ export function ProjectPicker({ service, onSelect }: { service: Service; onSelec
 
   if (candidates.length === 0) {
     return (
-      <div className="project-picker">
+      <div className="mb-4 max-w-[420px]">
         <Card>
           <EmptyState icon="🏗️" title="No projects yet" hint={<span>Create a project to get started, or type a project name below.</span>} />
           <form
@@ -55,8 +56,10 @@ export function ProjectPicker({ service, onSelect }: { service: Service; onSelec
               if (v) pick(v)
             }}
           >
-            <input name="project" placeholder="Type a project name…" />
-            <button className="btn btn-primary" type="submit">Select</button>
+            <Field label="Project">
+              <Input name="project" placeholder="Type a project name…" />
+            </Field>
+            <Button variant="primary" type="submit">Select</Button>
           </form>
         </Card>
       </div>
@@ -64,16 +67,14 @@ export function ProjectPicker({ service, onSelect }: { service: Service; onSelec
   }
 
   return (
-    <div className="project-picker">
-      <label className="field">
-        <span className="field-label">Project</span>
-        <select value={selected} onChange={(e) => pick(e.target.value)}>
-          {!candidates.includes(selected) && <option value="">—</option>}
-          {candidates.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-      </label>
+    <div className="mb-4 max-w-[420px]">
+      <SelectField
+        label="Project"
+        value={candidates.includes(selected) ? selected : ''}
+        onChange={pick}
+        options={candidates.map((c) => ({ value: c, label: c }))}
+        placeholder="— select project —"
+      />
     </div>
   )
 }

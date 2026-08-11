@@ -1,31 +1,97 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
   type ReactNode,
 } from 'react'
+import {
+  Button as HeroButton,
+  Card as HeroCard,
+  Chip,
+  Label,
+  ListBox,
+  Modal as HeroModal,
+  Select as HeroSelect,
+  Spinner as HeroSpinner,
+  Tabs as HeroTabs,
+  toast,
+  type Key,
+} from '@heroui/react'
 
 // ---- Primitives -------------------------------------------------------------
 
-export function Button({
-  variant = 'default',
-  className = '',
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'default' | 'primary' | 'danger' | 'ghost' }) {
-  const styles = {
-    default: 'btn',
-    primary: 'btn btn-primary',
-    danger: 'btn btn-danger',
-    ghost: 'btn btn-ghost',
-  }[variant]
-  return <button className={`${styles} ${className}`} {...props} />
+type ButtonVariant = 'default' | 'primary' | 'danger' | 'ghost'
+type ButtonSize = 'sm' | 'md' | 'lg'
+
+const buttonVariant: Record<ButtonVariant, 'primary' | 'secondary' | 'danger' | 'ghost'> = {
+  default: 'secondary',
+  primary: 'primary',
+  danger: 'danger',
+  ghost: 'ghost',
 }
 
-export function Badge({ tone = 'neutral', children }: { tone?: 'ok' | 'warn' | 'danger' | 'neutral' | 'info'; children: ReactNode }) {
-  return <span className={`badge badge-${tone}`}>{children}</span>
+export function Button({
+  variant = 'default',
+  size,
+  className = '',
+  disabled,
+  fullWidth,
+  type = 'button',
+  onPress,
+  children,
+  style,
+  ariaLabel,
+}: {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  className?: string
+  disabled?: boolean
+  fullWidth?: boolean
+  type?: 'button' | 'submit' | 'reset'
+  onPress?: () => void
+  children?: ReactNode
+  style?: React.CSSProperties
+  ariaLabel?: string
+}) {
+  return (
+    <HeroButton
+      variant={buttonVariant[variant]}
+      size={size}
+      isDisabled={disabled}
+      fullWidth={fullWidth}
+      type={type}
+      onPress={onPress}
+      style={style}
+      aria-label={ariaLabel}
+      className={className}
+    >
+      {children}
+    </HeroButton>
+  )
+}
+
+export function Badge({
+  tone = 'neutral',
+  children,
+  className,
+}: {
+  tone?: 'ok' | 'warn' | 'danger' | 'neutral' | 'info'
+  children: ReactNode
+  className?: string
+}) {
+  const color = ({
+    ok: 'success',
+    warn: 'warning',
+    danger: 'danger',
+    info: 'accent',
+    neutral: 'default',
+  } as const)[tone]
+  return (
+    <Chip color={color} size="sm" className={className}>
+      {children}
+    </Chip>
+  )
 }
 
 export function stateTone(state: string): 'ok' | 'warn' | 'danger' | 'info' | 'neutral' {
@@ -41,41 +107,157 @@ export function StateBadge({ state }: { state: string }) {
   return <Badge tone={stateTone(state)}>{state}</Badge>
 }
 
-export function Card({ title, actions, children, className = '' }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
+export function Card({
+  title,
+  actions,
+  children,
+  className = '',
+}: {
+  title?: ReactNode
+  actions?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
   return (
-    <div className={`card ${className}`}>
+    <HeroCard className={className}>
       {title !== undefined && (
-        <div className="card-head">
-          <h3>{title}</h3>
-          {actions && <div className="card-actions">{actions}</div>}
-        </div>
+        <HeroCard.Header className="flex items-center justify-between gap-3 border-b border-border">
+          <HeroCard.Title>{title}</HeroCard.Title>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </HeroCard.Header>
       )}
-      <div className="card-body">{children}</div>
+      <HeroCard.Content>{children}</HeroCard.Content>
+    </HeroCard>
+  )
+}
+
+export function Field({
+  label,
+  hint,
+  children,
+  className = '',
+}: {
+  label?: ReactNode
+  hint?: ReactNode
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <div className={`mb-3 flex flex-col gap-1.5 ${className}`}>
+      {label && <span className="text-xs font-semibold text-muted">{label}</span>}
+      {children}
+      {hint && <span className="text-xs text-muted">{hint}</span>}
     </div>
   )
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export interface SelectOption {
+  value: string
+  label: ReactNode
+}
+
+// Thin wrapper over HeroUI's compound Select so pages can keep a simple
+// `value`/`onChange` string contract (empty string means "nothing selected").
+export function SelectField({
+  label,
+  hint,
+  value,
+  onChange,
+  options,
+  placeholder = 'Select…',
+  disabled,
+  isRequired,
+  name,
+  className = '',
+}: {
+  label: string
+  hint?: string
+  value: string
+  onChange: (v: string) => void
+  options: SelectOption[]
+  placeholder?: string
+  disabled?: boolean
+  isRequired?: boolean
+  name?: string
+  className?: string
+}) {
   return (
-    <label className="field">
-      <span className="field-label">{label}</span>
-      {children}
-      {hint && <span className="field-hint">{hint}</span>}
-    </label>
+    <div className="flex flex-col gap-1.5">
+      <HeroSelect
+        className={className}
+        placeholder={placeholder}
+        value={(value || null) as Key | null}
+        onChange={(v) => onChange(v === null ? '' : String(v))}
+        isDisabled={disabled}
+        isRequired={isRequired}
+        name={name}
+      >
+        <Label>{label}</Label>
+        <HeroSelect.Trigger>
+          <HeroSelect.Value />
+          <HeroSelect.Indicator />
+        </HeroSelect.Trigger>
+        <HeroSelect.Popover>
+          <ListBox>
+            {options.map((o) => (
+              <ListBox.Item key={o.value} id={o.value} textValue={String(o.label)}>
+                {o.label}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </HeroSelect.Popover>
+      </HeroSelect>
+      {hint && <span className="text-xs text-muted">{hint}</span>}
+    </div>
   )
 }
 
 export function Spinner() {
-  return <span className="spinner" aria-label="loading" />
+  return <HeroSpinner size="sm" />
 }
 
 export function EmptyState({ icon = '🗂️', title, hint }: { icon?: string; title: string; hint?: ReactNode }) {
   return (
-    <div className="empty">
-      <div className="empty-icon">{icon}</div>
-      <div className="empty-title">{title}</div>
-      {hint && <div className="empty-hint">{hint}</div>}
+    <div className="py-7 px-4 text-center text-muted">
+      <div className="mb-2 text-[32px]">{icon}</div>
+      <div className="font-semibold text-foreground">{title}</div>
+      {hint && <div className="mt-1 text-[13px]">{hint}</div>}
     </div>
+  )
+}
+
+// ---- Segmented tabs (no panels; content is rendered by the caller) ----------
+
+export function SegmentedTabs({
+  tabs,
+  selected,
+  onSelect,
+  ariaLabel,
+}: {
+  tabs: readonly string[]
+  selected: string
+  onSelect: (t: string) => void
+  ariaLabel?: string
+}) {
+  return (
+    <HeroTabs
+      variant="secondary"
+      selectedKey={selected}
+      onSelectionChange={(k) => onSelect(String(k))}
+      aria-label={ariaLabel}
+    >
+      <HeroTabs.ListContainer>
+        <HeroTabs.List>
+          {tabs.map((t) => (
+            <HeroTabs.Tab key={t} id={t}>
+              {t}
+              <HeroTabs.Indicator />
+            </HeroTabs.Tab>
+          ))}
+        </HeroTabs.List>
+      </HeroTabs.ListContainer>
+    </HeroTabs>
   )
 }
 
@@ -96,18 +278,19 @@ export function Modal({
   footer?: ReactNode
   wide?: boolean
 }) {
-  if (!open) return null
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className={`modal ${wide ? 'modal-wide' : ''}`} onClick={(e) => e.stopPropagation()}>
-        <div className="modal-head">
-          <h3>{title}</h3>
-          <button className="btn btn-ghost" onClick={onClose} aria-label="close">✕</button>
-        </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-foot">{footer}</div>}
-      </div>
-    </div>
+    <HeroModal.Backdrop isOpen={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <HeroModal.Container size={wide ? 'lg' : 'md'}>
+        <HeroModal.Dialog>
+          <HeroModal.CloseTrigger />
+          <HeroModal.Header>
+            <HeroModal.Heading>{title}</HeroModal.Heading>
+          </HeroModal.Header>
+          <HeroModal.Body>{children}</HeroModal.Body>
+          {footer !== undefined && <HeroModal.Footer>{footer}</HeroModal.Footer>}
+        </HeroModal.Dialog>
+      </HeroModal.Container>
+    </HeroModal.Backdrop>
   )
 }
 
@@ -131,10 +314,10 @@ export function ConfirmButton({
   }
   return (
     <>
-      <Button variant="danger" onClick={() => setOpen(true)} disabled={busy}>{children ?? label}</Button>
+      <Button variant="danger" onPress={() => setOpen(true)} disabled={busy}>{children ?? label}</Button>
       <Modal open={open} onClose={() => setOpen(false)} title={confirmLabel} footer={<>
-        <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-        <Button variant="danger" onClick={run} disabled={busy}>{confirmLabel}</Button>
+        <Button variant="ghost" onPress={() => setOpen(false)}>Cancel</Button>
+        <Button variant="danger" onPress={run} disabled={busy}>{confirmLabel}</Button>
       </>}>
         <p>Are you sure? This action cannot be undone.</p>
       </Modal>
@@ -142,43 +325,18 @@ export function ConfirmButton({
   )
 }
 
-// ---- Toasts -----------------------------------------------------------------
+// ---- Toasts (HeroUI `toast()` + <Toast.Provider /> mounted in AppShell) -----
 
 export type ToastKind = 'info' | 'success' | 'error'
-export interface Toast {
-  id: number
-  kind: ToastKind
-  message: string
-}
-
-interface ToastCtxType {
-  show: (kind: ToastKind, message: string) => void
-}
-const ToastCtx = createContext<ToastCtxType | null>(null)
-
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const show = useCallback((kind: ToastKind, message: string) => {
-    const id = Date.now() + Math.random()
-    setToasts((t) => [...t, { id, kind, message }])
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 5000)
-  }, [])
-  return (
-    <ToastCtx.Provider value={{ show }}>
-      {children}
-      <div className="toasts">
-        {toasts.map((t) => (
-          <div key={t.id} className={`toast toast-${t.kind}`}>{t.message}</div>
-        ))}
-      </div>
-    </ToastCtx.Provider>
-  )
-}
 
 export function useToast() {
-  const ctx = useContext(ToastCtx)
-  if (!ctx) throw new Error('useToast must be used within ToastProvider')
-  return ctx
+  return {
+    show: (kind: ToastKind, message: string) => {
+      if (kind === 'success') toast.success(message)
+      else if (kind === 'error') toast.danger(message)
+      else toast.info(message)
+    },
+  }
 }
 
 // ---- Async data hook --------------------------------------------------------

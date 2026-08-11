@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
+import { Input } from '@heroui/react'
 import { PageHeader, ProjectPicker } from '../components/PageHeader'
-import { Card, Field, Button, Modal, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
+import { Card, Field, Button, Modal, SelectField, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
+import { kv } from '../components/format'
 import type { Cluster, KubernetesVersion, NodeSize, NodeGroup } from '../api/types'
 import { api } from '../api/client'
 
@@ -37,15 +39,17 @@ function CreateCluster({ project, onDone }: { project: string; onDone: () => voi
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Kubernetes version">
-          <select value={version} onChange={(e) => setVersion(e.target.value)} required>
-            <option value="">—</option>
-            {versions.data?.map((v) => <option key={v.version} value={v.version}>{v.version} ({v.channel})</option>)}
-          </select>
-        </Field>
+        <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <SelectField
+          label="Kubernetes version"
+          value={version}
+          onChange={setVersion}
+          isRequired
+          placeholder="—"
+          options={(versions.data ?? []).map((v) => ({ value: v.version, label: `${v.version} (${v.channel})` }))}
+        />
       </div>
-      <Field label="Region"><input value={region} onChange={(e) => setRegion(e.target.value)} /></Field>
+      <Field label="Region"><Input value={region} onChange={(e) => setRegion(e.target.value)} /></Field>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
         <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create'}</Button>
@@ -95,19 +99,21 @@ function CreateNodeGroup({ project, clusterId, onDone }: { project: string; clus
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Node size">
-          <select value={nodeSize} onChange={(e) => setNodeSize(e.target.value)} required>
-            <option value="">—</option>
-            {sizes.data?.map((s) => <option key={s.name} value={s.name}>{s.name} ({s.vcpus} vCPU · {s.memory_gb} GB)</option>)}
-          </select>
-        </Field>
+        <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <SelectField
+          label="Node size"
+          value={nodeSize}
+          onChange={setNodeSize}
+          isRequired
+          placeholder="—"
+          options={(sizes.data ?? []).map((s) => ({ value: s.name, label: `${s.name} (${s.vcpus} vCPU · ${s.memory_gb} GB)` }))}
+        />
       </div>
       <div className="form-grid">
-        <Field label="Min size"><input value={minSize} onChange={(e) => setMinSize(e.target.value)} type="number" min={0} /></Field>
-        <Field label="Desired size"><input value={desiredSize} onChange={(e) => setDesiredSize(e.target.value)} type="number" min={0} /></Field>
+        <Field label="Min size"><Input value={minSize} onChange={(e) => setMinSize(e.target.value)} type="number" min={0} /></Field>
+        <Field label="Desired size"><Input value={desiredSize} onChange={(e) => setDesiredSize(e.target.value)} type="number" min={0} /></Field>
       </div>
-      <Field label="Max size"><input value={maxSize} onChange={(e) => setMaxSize(e.target.value)} type="number" min={0} /></Field>
+      <Field label="Max size"><Input value={maxSize} onChange={(e) => setMaxSize(e.target.value)} type="number" min={0} /></Field>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
         <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create'}</Button>
@@ -198,21 +204,19 @@ export default function OrpheusPage() {
   return (
     <div>
       <PageHeader icon="☸️" title="Orpheus" tagline="Managed Kubernetes — provision clusters, fetch kubeconfigs, scale node groups.">
-        <Button variant="ghost" onClick={() => { clusters.refetch(); versions.refetch(); sizes.refetch() }}>Refresh</Button>
-        <Button variant="primary" disabled={!project} onClick={() => setCreating(true)}>+ Cluster</Button>
+        <Button variant="ghost" onPress={() => { clusters.refetch(); versions.refetch(); sizes.refetch() }}>Refresh</Button>
+        <Button variant="primary" disabled={!project} onPress={() => setCreating(true)}>+ Cluster</Button>
       </PageHeader>
       <ProjectPicker service={SERVICE} onSelect={setProject} />
 
-      <Card title="Catalogs" className="catalogs">
-        <div className="row" style={{ gap: 16, flexWrap: 'wrap' }}>
-          <div className="field" style={{ margin: 0, minWidth: 260 }}>
-            <span className="field-label">Kubernetes versions</span>
-            {versions.data?.map((v) => <Badge key={v.version} tone={v.status === 'active' ? 'ok' : 'warn'}>{v.version} {v.channel}</Badge>)}
-          </div>
-          <div className="field" style={{ margin: 0, minWidth: 260 }}>
-            <span className="field-label">Node sizes</span>
-            {sizes.data?.map((s) => <Badge key={s.name} tone="info">{s.name} ({s.vcpus}v · {s.memory_gb}GB)</Badge>)}
-          </div>
+      <Card title="Catalogs">
+        <div className="row" style={{ gap: 16 }}>
+          <Field label="Kubernetes versions" className="m-0" >
+            <div className="row">{versions.data?.map((v) => <Badge key={v.version} tone={v.status === 'active' ? 'ok' : 'warn'}>{v.version} {v.channel}</Badge>)}</div>
+          </Field>
+          <Field label="Node sizes" className="m-0" >
+            <div className="row">{sizes.data?.map((s) => <Badge key={s.name} tone="info">{s.name} ({s.vcpus}v · {s.memory_gb}GB)</Badge>)}</div>
+          </Field>
         </div>
       </Card>
       <div className="section-gap" />
@@ -220,7 +224,7 @@ export default function OrpheusPage() {
       {!project ? <EmptyState icon="☸️" title="Select a project" hint="Choose a project to see its clusters." /> : (
         <Card title={`Clusters · ${project}`}>
           {clusters.loading ? <p>Loading…</p> : clusters.data?.length === 0 ? <EmptyState icon="☸️" title="No clusters" hint="Provision your first managed Kubernetes cluster." /> : (
-            <table className="data">
+            <table className="data-table">
               <thead><tr><th>Name</th><th>State</th><th>Version</th><th>Region</th><th>Endpoint</th><th className="right">Actions</th></tr></thead>
               <tbody>
                 {clusters.data?.map((c) => (
@@ -231,9 +235,9 @@ export default function OrpheusPage() {
                     <td className="muted">{c.region}</td>
                     <td className="mono">{c.endpoint || '—'}</td>
                     <td className="right">
-                      <Button variant="ghost" onClick={() => openCluster(c)}>Manage</Button>
-                      {c.state === 'active' && <Button variant="ghost" onClick={() => downloadKubeconfig(c)}>kubeconfig</Button>}
-                      <Button variant="danger" onClick={() => delCluster(c.name)}>Delete</Button>
+                      <Button variant="ghost" size="sm" onPress={() => openCluster(c)}>Manage</Button>
+                      {c.state === 'active' && <Button variant="ghost" size="sm" onPress={() => downloadKubeconfig(c)}>kubeconfig</Button>}
+                      <Button variant="danger" size="sm" onPress={() => delCluster(c.name)}>Delete</Button>
                     </td>
                   </tr>
                 ))}
@@ -243,7 +247,7 @@ export default function OrpheusPage() {
         </Card>
       )}
 
-      <Modal open={creating} onClose={() => setCreating(false)} title="Create cluster" footer={<Button variant="ghost" onClick={() => setCreating(false)}>Cancel</Button>}>
+      <Modal open={creating} onClose={() => setCreating(false)} title="Create cluster" footer={<Button variant="ghost" onPress={() => setCreating(false)}>Cancel</Button>}>
         <CreateCluster project={project} onDone={() => { setCreating(false); clusters.refetch() }} />
       </Modal>
 
@@ -251,22 +255,22 @@ export default function OrpheusPage() {
         <Modal open wide onClose={() => setViewCluster(null)}
           title={`Cluster ${viewCluster.name}`}
           footer={
-            <>
-              <Button variant="ghost" onClick={() => setCreatingNG(true)}>+ Node group</Button>
-              <Button variant="ghost" onClick={() => setViewCluster(null)}>Close</Button>
-            </>
+            <div className="row-end">
+              <Button variant="ghost" onPress={() => setCreatingNG(true)}>+ Node group</Button>
+              <Button variant="ghost" onPress={() => setViewCluster(null)}>Close</Button>
+            </div>
           }>
-          <dl className="kv">
-            <div className="kv-row"><dt>State</dt><dd><StateBadge state={viewCluster.state} /></dd></div>
-            <div className="kv-row"><dt>Version</dt><dd>{viewCluster.kubernetes_version}</dd></div>
-            <div className="kv-row"><dt>Region</dt><dd>{viewCluster.region}</dd></div>
-            <div className="kv-row"><dt>Endpoint</dt><dd className="mono">{viewCluster.endpoint || '—'}</dd></div>
-            <div className="kv-row"><dt>Provider ref</dt><dd className="mono">{viewCluster.provider_ref || '—'}</dd></div>
-          </dl>
+          {kv([
+            ['State', <StateBadge state={viewCluster.state} />],
+            ['Version', viewCluster.kubernetes_version],
+            ['Region', viewCluster.region],
+            ['Endpoint', <span className="mono">{viewCluster.endpoint || '—'}</span>],
+            ['Provider ref', <span className="mono">{viewCluster.provider_ref || '—'}</span>],
+          ])}
           <div className="section-gap" />
-          <Card title="Node groups" actions={<Button variant="ghost" onClick={() => setCreatingNG(true)}>+ Node group</Button>}>
+          <Card title="Node groups" actions={<Button variant="ghost" size="sm" onPress={() => setCreatingNG(true)}>+ Node group</Button>}>
             {nodeGroups.loading ? <p>Loading…</p> : !nodeGroups.data?.length ? <EmptyState icon="🧩" title="No node groups" hint="Add a node group to run your workloads." /> : (
-              <table className="data">
+              <table className="data-table">
                 <thead><tr><th>Name</th><th>State</th><th>Size</th><th>Min</th><th>Desired</th><th>Max</th><th className="right">Actions</th></tr></thead>
                 <tbody>
                   {nodeGroups.data.map((ng) => (
@@ -278,8 +282,8 @@ export default function OrpheusPage() {
                       <td className="num">{ng.desired_size}</td>
                       <td className="num">{ng.max_size}</td>
                       <td className="right">
-                        <Button variant="ghost" onClick={() => setScaling({ cluster: viewCluster, ng })}>Scale</Button>
-                        <Button variant="danger" onClick={() => delNodeGroup(viewCluster.name, ng.name)}>Delete</Button>
+                        <Button variant="ghost" size="sm" onPress={() => setScaling({ cluster: viewCluster, ng })}>Scale</Button>
+                        <Button variant="danger" size="sm" onPress={() => delNodeGroup(viewCluster.name, ng.name)}>Delete</Button>
                       </td>
                     </tr>
                   ))}
@@ -290,12 +294,12 @@ export default function OrpheusPage() {
         </Modal>
       )}
 
-      <Modal open={creatingNG} onClose={() => setCreatingNG(false)} title="Create node group" footer={<Button variant="ghost" onClick={() => setCreatingNG(false)}>Cancel</Button>}>
+      <Modal open={creatingNG} onClose={() => setCreatingNG(false)} title="Create node group" footer={<Button variant="ghost" onPress={() => setCreatingNG(false)}>Cancel</Button>}>
         {viewCluster && <CreateNodeGroup project={project} clusterId={viewCluster.name} onDone={() => { setCreatingNG(false); nodeGroups.refetch() }} />}
       </Modal>
 
       {scaling && (
-        <Modal open onClose={() => setScaling(null)} title={`Scale ${scaling.ng.name}`} footer={<Button variant="ghost" onClick={() => setScaling(null)}>Cancel</Button>}>
+        <Modal open onClose={() => setScaling(null)} title={`Scale ${scaling.ng.name}`} footer={<Button variant="ghost" onPress={() => setScaling(null)}>Cancel</Button>}>
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -304,7 +308,7 @@ export default function OrpheusPage() {
             }}
           >
             <Field label="Desired size" hint={`min ${scaling.ng.min_size} · max ${scaling.ng.max_size}`}>
-              <input name="desired" type="number" defaultValue={scaling.ng.desired_size} />
+              <Input name="desired" type="number" defaultValue={scaling.ng.desired_size} />
             </Field>
             <div className="row-end">
               <Button variant="primary" type="submit">Apply</Button>

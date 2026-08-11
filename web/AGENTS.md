@@ -18,11 +18,13 @@ npm run dev                  # Vite dev server; proxies /api -> http://localhost
   `localStorage['olympus.tenant']` (default `default`), parses JSON, throws
   `ApiError` on non-2xx. `fetchGatewayHealth` polls `/api/health`.
 - `src/api/types.ts` — response shapes for all seven service backends.
-- `src/components/ui.tsx` — shared primitives: `Button`, `Badge`/`StateBadge`,
-  `Card`, `Field`, `Spinner`, `EmptyState`, `Modal`, `ConfirmButton`,
-  `ToastProvider`/`useToast`, and the `useAsync` data-fetching hook.
+- `src/components/ui.tsx` — shared primitives wrapping HeroUI v3: `Button`,
+  `Badge`/`StateBadge`, `Card`, `Field`, `SelectField`, `Spinner`, `EmptyState`,
+  `Modal`, `ConfirmButton`, `SegmentedTabs`, `useToast`, and the `useAsync`
+  data-fetching hook.
 - `src/components/AppShell.tsx` — sidebar with the `SERVICE_META` map (icon,
-  tagline) and the account/tenant switcher (`setTenant`).
+  tagline), the account/tenant switcher (`setTenant`), and the mounted
+  `<Toast.Provider placement="bottom end" />`.
 - `src/components/PageHeader.tsx` — `PageHeader` + `ProjectPicker` (selected
   project is remembered per service in `sessionStorage['olympus.project.<name>']`).
 - `src/components/format.tsx` — `CopyButton`, `formatTime`, `kv` pair renderer.
@@ -31,6 +33,23 @@ npm run dev                  # Vite dev server; proxies /api -> http://localhost
 
 ## Conventions
 
+- **HeroUI v3 is the component library.** It is CSS-driven: `src/index.css`
+  imports `tailwindcss` then `@heroui/styles`, and the `dark` theme is selected
+  by `class="dark" data-theme="dark"` on `<html>` (in `index.html`). There is
+  **no `HeroUIProvider` wrapper** and no `plugin` config needed for Tailwind.
+- HeroUI v3 exposes **compound components**: `Modal` (Backdrop/Container/Dialog/
+  CloseTrigger/Header/Heading/Body/Footer), `Card` (Header/Title/Content),
+  `Select` (Trigger/Value/Indicator/Popover), `Tabs` (ListContainer/List/Tab/
+  Indicator), `Toast` (Provider + imperative `toast()`). Prefer the shared
+  wrappers in `ui.tsx` (`Modal`, `Card`, `SelectField`, `SegmentedTabs`) over
+  raw HeroUI pieces.
+- **Buttons use `onPress`, not `onClick`.** Map page-facing variants to HeroUI:
+  `default → secondary`, `primary → primary`, `danger → danger`,
+  `ghost → ghost`.
+- `SelectField` takes `value: string` / `onChange: (v: string) => void` (empty
+  string = nothing selected) and wraps HeroUI's compound `Select`, whose native
+  API is `value: Key | null` / `onChange: (Key | null) => void`.
+- Toasts: `const { show } = useToast()`; `show('success' | 'error' | 'info', msg)`.
 - Every request goes through `api()` so tenant + JSON handling stays in one place.
 - Amphora has no tenant header and no list/delete endpoints — `AmphoraPage`
   keeps a client-side registry in `localStorage['olympus.amphora.objects']` keyed

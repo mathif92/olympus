@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
+import { Input, TextArea } from '@heroui/react'
 import { PageHeader, ProjectPicker } from '../components/PageHeader'
-import { Card, Field, Button, Modal, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
-import { CopyButton, formatTime } from '../components/format'
+import { Card, Field, Button, Modal, SelectField, SegmentedTabs, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
+import { CopyButton, formatTime, kv } from '../components/format'
 import type { Instance, InstanceType, KeyPair, KeyPairCreated, SecurityGroup, Volume, Snapshot } from '../api/types'
 import { api } from '../api/client'
 
@@ -51,38 +52,40 @@ function CreateInstance({ project, onDone }: { project: string; onDone: () => vo
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Instance type">
-          <select value={type} onChange={(e) => setType(e.target.value)} required>
-            <option value="">—</option>
-            {types.data?.map((t) => (
-              <option key={t.name} value={t.name}>
-                {t.name} ({t.vcpus} vCPU · {t.memory_gb} GB · {t.storage_gb} GB)
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <SelectField
+          label="Instance type"
+          value={type}
+          onChange={setType}
+          isRequired
+          placeholder="— select type —"
+          options={(types.data ?? []).map((t) => ({
+            value: t.name,
+            label: `${t.name} (${t.vcpus} vCPU · ${t.memory_gb} GB · ${t.storage_gb} GB)`,
+          }))}
+        />
       </div>
       <div className="form-grid">
-        <Field label="Image id"><input value={imageId} onChange={(e) => setImageId(e.target.value)} /></Field>
-        <Field label="Key pair">
-          <select value={keyPair} onChange={(e) => setKeyPair(e.target.value)}>
-            <option value="">— none —</option>
-            {keypairs.data?.map((k) => <option key={k.id} value={k.name}>{k.name}</option>)}
-          </select>
-        </Field>
+        <Field label="Image id"><Input value={imageId} onChange={(e) => setImageId(e.target.value)} /></Field>
+        <SelectField
+          label="Key pair"
+          value={keyPair}
+          onChange={setKeyPair}
+          placeholder="— none —"
+          options={(keypairs.data ?? []).map((k) => ({ value: k.name, label: k.name }))}
+        />
       </div>
       <div className="form-grid">
-        <Field label="Boot volume (GB)" hint="defaults to the type's storage"><input value={volumeGb} onChange={(e) => setVolumeGb(e.target.value)} type="number" min={1} /></Field>
+        <Field label="Boot volume (GB)" hint="defaults to the type's storage"><Input value={volumeGb} onChange={(e) => setVolumeGb(e.target.value)} type="number" min={1} /></Field>
         <Field label="Security groups (comma-separated)">
-          <input value={secGroups} onChange={(e) => setSecGroups(e.target.value)} placeholder="web,db" list="hph-secgroups" />
+          <Input value={secGroups} onChange={(e) => setSecGroups(e.target.value)} placeholder="web,db" list="hph-secgroups" />
           <datalist id="hph-secgroups">
-            {groups.data?.map((g) => <option key={g.id} value={g.name} />)}
+            {(groups.data ?? []).map((g) => <option key={g.id} value={g.name} />)}
           </datalist>
         </Field>
       </div>
       {error && <div className="form-errors">{error}</div>}
-      <div className="row-end" style={{ marginTop: 8 }}>
+      <div className="row-end mt-2">
         <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Launching…' : 'Launch'}</Button>
       </div>
     </form>
@@ -117,24 +120,24 @@ function CreateKeyPair({ project, onDone }: { project: string; onDone: () => voi
 
   return (
     <form onSubmit={submit}>
-      <Field label="Key pair name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+      <Field label="Key pair name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
         <Button variant="primary" type="submit" disabled={busy || !!result}>{busy ? 'Generating…' : 'Generate'}</Button>
       </div>
       {result && (
-        <div className="section-gap" />
-      )}
-      {result && (
-        <Card title="Private key (shown once)" >
-          <p style={{ marginTop: 0 }} className="form-errors">
-            Copy this now — Hephaestus persists only the public key; this private key will not be returned again.
-          </p>
-          <div className="code-block">{result.private_key}</div>
-          <div className="row" style={{ marginTop: 8 }}>
-            <CopyButton text={result.private_key} label="Copy private key" />
-          </div>
-        </Card>
+        <>
+          <div className="section-gap" />
+          <Card title="Private key (shown once)" >
+            <div className="form-errors" style={{ marginBottom: 8 }}>
+              Copy this now — Hephaestus persists only the public key; this private key will not be returned again.
+            </div>
+            <div className="code-block">{result.private_key}</div>
+            <div className="row mt-2">
+              <CopyButton text={result.private_key} label="Copy private key" />
+            </div>
+          </Card>
+        </>
       )}
     </form>
   )
@@ -173,11 +176,11 @@ function CreateSecurityGroup({ project, onDone }: { project: string; onDone: () 
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Description"><input value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
+        <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <Field label="Description"><Input value={description} onChange={(e) => setDescription(e.target.value)} /></Field>
       </div>
       <Field label="Rules" hint='one per line: "port:cidr" e.g. 22:0.0.0.0/0 — leave empty for the default SSH rule'>
-        <textarea value={rulesText} onChange={(e) => setRulesText(e.target.value)} />
+        <TextArea value={rulesText} onChange={(e) => setRulesText(e.target.value)} />
       </Field>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
@@ -215,8 +218,8 @@ function CreateVolume({ project, onDone }: { project: string; onDone: () => void
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Size (GB)"><input value={sizeGb} onChange={(e) => setSizeGb(e.target.value)} type="number" min={1} /></Field>
+        <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <Field label="Size (GB)"><Input value={sizeGb} onChange={(e) => setSizeGb(e.target.value)} type="number" min={1} /></Field>
       </div>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
@@ -254,13 +257,15 @@ function CreateSnapshot({ project, volumes, onDone }: { project: string; volumes
   return (
     <form onSubmit={submit}>
       <div className="form-grid">
-        <Field label="Snapshot name"><input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
-        <Field label="Volume">
-          <select value={volume} onChange={(e) => setVolume(e.target.value)} required>
-            <option value="">—</option>
-            {volumes.map((v) => <option key={v.id} value={v.name}>{v.name} ({v.size_gb} GB)</option>)}
-          </select>
-        </Field>
+        <Field label="Snapshot name"><Input value={name} onChange={(e) => setName(e.target.value)} required autoFocus /></Field>
+        <SelectField
+          label="Volume"
+          value={volume}
+          onChange={setVolume}
+          isRequired
+          placeholder="— select volume —"
+          options={volumes.map((v) => ({ value: v.name, label: `${v.name} (${v.size_gb} GB)` }))}
+        />
       </div>
       {error && <div className="form-errors">{error}</div>}
       <div className="row-end">
@@ -342,31 +347,29 @@ export default function HephaestusPage() {
       volumes: '+ Volume',
       snapshots: '+ Snapshot',
     }
-    return <Button variant="primary" onClick={() => { setCreating(true) }}>{labels[tab]}</Button>
+    return <Button variant="primary" onPress={() => { setCreating(true) }}>{labels[tab]}</Button>
   }
+
+  const tabDefs = ['instances', 'keypairs', 'groups', 'volumes', 'snapshots'] as const
 
   return (
     <div>
       <PageHeader icon="⚙️" title="Hephaestus" tagline="Compute control plane — launch instances, issue key pairs, manage volumes.">
-        <Button variant="ghost" onClick={refreshAll}>Refresh</Button>
+        <Button variant="ghost" onPress={refreshAll}>Refresh</Button>
         {createButton()}
       </PageHeader>
       <ProjectPicker service={SERVICE} onSelect={setProject} />
 
-      <div className="tabs">
-        {(['instances', 'keypairs', 'groups', 'volumes', 'snapshots'] as const).map((t) => (
-          <button key={t} type="button" className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
-            {t}
-          </button>
-        ))}
+      <div className="mb-4">
+        <SegmentedTabs tabs={tabDefs} selected={tab} onSelect={(t) => setTab(t as typeof tab)} ariaLabel="Hephaestus resources" />
       </div>
 
       {!project && <EmptyState icon="🖥️" title="Select a project" hint="Choose a project to operate on or create one in the picker above." />}
 
       {tab === 'instances' && project && (
         <Card title={`Instances · ${project}`}>
-          {instances.loading ? <p>Loading…</p> : instances.data?.length === 0 ? <EmptyState icon="🖥️" title="No instances" hint="Launch your first instance." /> : (
-            <table className="data">
+          {instances.loading ? <p>Loading…</p> : (instances.data ?? []).length === 0 ? <EmptyState icon="🖥️" title="No instances" hint="Launch your first instance." /> : (
+            <table className="data-table">
               <thead>
                 <tr><th>Name</th><th>State</th><th>Type</th><th>Image</th><th>IPs</th><th>Key</th><th className="right">Actions</th></tr>
               </thead>
@@ -380,10 +383,10 @@ export default function HephaestusPage() {
                     <td><span className="mono">{i.private_ip || ''}{i.public_ip ? ` / ${i.public_ip}` : ''}</span></td>
                     <td className="muted">{i.key_pair_name || '—'}</td>
                     <td className="right">
-                      {i.state === 'stopped' && <Button variant="ghost" onClick={() => instanceAction(i.name, 'start')}>Start</Button>}
-                      {i.state === 'running' && <Button variant="ghost" onClick={() => instanceAction(i.name, 'stop')}>Stop</Button>}
-                      {i.state !== 'terminated' && <Button variant="ghost" onClick={() => setViewing(i)}>View</Button>}
-                      {i.state !== 'terminated' && <Button variant="danger" onClick={() => terminate(i.name)}>Terminate</Button>}
+                      {i.state === 'stopped' && <Button variant="ghost" size="sm" onPress={() => instanceAction(i.name, 'start')}>Start</Button>}
+                      {i.state === 'running' && <Button variant="ghost" size="sm" onPress={() => instanceAction(i.name, 'stop')}>Stop</Button>}
+                      {i.state !== 'terminated' && <Button variant="ghost" size="sm" onPress={() => setViewing(i)}>View</Button>}
+                      {i.state !== 'terminated' && <Button variant="danger" size="sm" onPress={() => terminate(i.name)}>Terminate</Button>}
                     </td>
                   </tr>
                 ))}
@@ -395,8 +398,8 @@ export default function HephaestusPage() {
 
       {tab === 'keypairs' && project && (
         <Card title={`Key pairs · ${project}`}>
-          {keypairs.loading ? <p>Loading…</p> : keypairs.data?.length === 0 ? <EmptyState icon="🔑" title="No key pairs" hint="Generate an SSH key pair to use with instances." /> : (
-            <table className="data">
+          {keypairs.loading ? <p>Loading…</p> : (keypairs.data ?? []).length === 0 ? <EmptyState icon="🔑" title="No key pairs" hint="Generate an SSH key pair to use with instances." /> : (
+            <table className="data-table">
               <thead><tr><th>Name</th><th>Fingerprint</th><th>Public key</th><th>Created</th></tr></thead>
               <tbody>
                 {keypairs.data?.map((k) => (
@@ -415,8 +418,8 @@ export default function HephaestusPage() {
 
       {tab === 'groups' && project && (
         <Card title={`Security groups · ${project}`}>
-          {groups.loading ? <p>Loading…</p> : groups.data?.length === 0 ? <EmptyState icon="🛡️" title="No security groups" hint="Create a group to open ports." /> : (
-            <table className="data">
+          {groups.loading ? <p>Loading…</p> : (groups.data ?? []).length === 0 ? <EmptyState icon="🛡️" title="No security groups" hint="Create a group to open ports." /> : (
+            <table className="data-table">
               <thead><tr><th>Name</th><th>Description</th><th>Rules</th></tr></thead>
               <tbody>
                 {groups.data?.map((g) => (
@@ -424,9 +427,11 @@ export default function HephaestusPage() {
                     <td><span className="mono">{g.name}</span></td>
                     <td className="muted">{g.description || '—'}</td>
                     <td>
-                      {g.rules.map((r) => (
-                        <Badge key={`${r.port}-${r.cidr}`} tone="info">{r.port} / {r.cidr}</Badge>
-                      ))}
+                      <div className="row">
+                        {g.rules.map((r) => (
+                          <Badge key={`${r.port}-${r.cidr}`} tone="info">{r.port} / {r.cidr}</Badge>
+                        ))}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -438,8 +443,8 @@ export default function HephaestusPage() {
 
       {tab === 'volumes' && project && (
         <Card title={`Volumes · ${project}`}>
-          {volumes.loading ? <p>Loading…</p> : volumes.data?.length === 0 ? <EmptyState icon="💽" title="No volumes" hint="Create a block volume." /> : (
-            <table className="data">
+          {volumes.loading ? <p>Loading…</p> : (volumes.data ?? []).length === 0 ? <EmptyState icon="💽" title="No volumes" hint="Create a block volume." /> : (
+            <table className="data-table">
               <thead><tr><th>Name</th><th>State</th><th>Size</th><th>Type</th><th>Attached to</th><th className="right">Actions</th></tr></thead>
               <tbody>
                 {volumes.data?.map((v) => (
@@ -450,7 +455,7 @@ export default function HephaestusPage() {
                     <td className="muted">{v.volume_type}</td>
                     <td className="muted">{v.instance_id ? <span className="mono">{v.instance_id.slice(0, 12)}…</span> : '—'}</td>
                     <td className="right">
-                      {!v.instance_id && <Button variant="danger" onClick={() => deleteVolume(v.name)}>Delete</Button>}
+                      {!v.instance_id && <Button variant="danger" size="sm" onPress={() => deleteVolume(v.name)}>Delete</Button>}
                     </td>
                   </tr>
                 ))}
@@ -462,8 +467,8 @@ export default function HephaestusPage() {
 
       {tab === 'snapshots' && project && (
         <Card title={`Snapshots · ${project}`}>
-          {snapshots.loading ? <p>Loading…</p> : snapshots.data?.length === 0 ? <EmptyState icon="📸" title="No snapshots" hint="Snapshot a volume to capture its state." /> : (
-            <table className="data">
+          {snapshots.loading ? <p>Loading…</p> : (snapshots.data ?? []).length === 0 ? <EmptyState icon="📸" title="No snapshots" hint="Snapshot a volume to capture its state." /> : (
+            <table className="data-table">
               <thead><tr><th>Name</th><th>State</th><th>Size</th><th>Volume</th><th>Created</th></tr></thead>
               <tbody>
                 {snapshots.data?.map((s) => (
@@ -485,7 +490,7 @@ export default function HephaestusPage() {
         open={creating}
         onClose={() => setCreating(false)}
         title={tab === 'instances' ? 'Launch instance' : tab === 'keypairs' ? 'Generate key pair' : tab === 'groups' ? 'Create security group' : tab === 'volumes' ? 'Create volume' : 'Create snapshot'}
-        footer={<Button variant="ghost" onClick={() => setCreating(false)}>Cancel</Button>}
+        footer={<Button variant="ghost" onPress={() => setCreating(false)}>Cancel</Button>}
       >
         {tab === 'instances' && <CreateInstance project={project} onDone={() => { setCreating(false); instances.refetch() }} />}
         {tab === 'keypairs' && <CreateKeyPair project={project} onDone={() => { setCreating(false); keypairs.refetch() }} />}
@@ -496,20 +501,20 @@ export default function HephaestusPage() {
 
       {viewing && (
         <Modal open onClose={() => setViewing(null)} title={`Instance ${viewing.name}`}
-          footer={<Button variant="ghost" onClick={() => setViewing(null)}>Close</Button>}>
-          <dl className="kv">
-            <div className="kv-row"><dt>State</dt><dd><StateBadge state={viewing.state} /></dd></div>
-            <div className="kv-row"><dt>Instance type</dt><dd>{viewing.instance_type}</dd></div>
-            <div className="kv-row"><dt>Image</dt><dd>{viewing.image_id}</dd></div>
-            <div className="kv-row"><dt>Private IP</dt><dd className="mono">{viewing.private_ip || '—'}</dd></div>
-            <div className="kv-row"><dt>Public IP</dt><dd className="mono">{viewing.public_ip || '—'}</dd></div>
-            <div className="kv-row"><dt>Key pair</dt><dd>{viewing.key_pair_name || '—'}</dd></div>
-            <div className="kv-row"><dt>Provider ref</dt><dd className="mono">{viewing.provider_ref || '—'}</dd></div>
-            <div className="kv-row"><dt>Launched by</dt><dd>{viewing.launched_by}</dd></div>
-            <div className="kv-row"><dt>Launched</dt><dd>{formatTime(viewing.launched_at)}</dd></div>
-            <div className="kv-row"><dt>Terminated</dt><dd>{formatTime(viewing.terminated_at)}</dd></div>
-            <div className="kv-row"><dt>Updated</dt><dd>{formatTime(viewing.updated_at)}</dd></div>
-          </dl>
+          footer={<Button variant="ghost" onPress={() => setViewing(null)}>Close</Button>}>
+          {kv([
+            ['State', <StateBadge state={viewing.state} />],
+            ['Instance type', viewing.instance_type],
+            ['Image', viewing.image_id],
+            ['Private IP', <span className="mono">{viewing.private_ip || '—'}</span>],
+            ['Public IP', <span className="mono">{viewing.public_ip || '—'}</span>],
+            ['Key pair', viewing.key_pair_name || '—'],
+            ['Provider ref', <span className="mono">{viewing.provider_ref || '—'}</span>],
+            ['Launched by', viewing.launched_by],
+            ['Launched', formatTime(viewing.launched_at)],
+            ['Terminated', formatTime(viewing.terminated_at)],
+            ['Updated', formatTime(viewing.updated_at)],
+          ])}
         </Modal>
       )}
     </div>

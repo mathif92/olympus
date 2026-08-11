@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // The console gateway serves the SPA and proxies /api/<service>/* to the
 // backends. In dev, forward /api to the local gateway so the browser keeps a
 // single origin.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
     proxy: {
@@ -18,5 +19,13 @@ export default defineConfig({
   build: {
     outDir: '../console/web/console',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          heroui: ['@heroui/react'],
+        },
+      },
+    },
   },
 })

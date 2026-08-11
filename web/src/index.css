@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+@import '@heroui/styles';
+
+/* HeroUI is CSS-driven: the `dark` class on <html> selects the dark theme. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---- shared text/layout helpers (used across every page) ---- */
+@layer components {
+  .mono {
+    @apply font-mono text-[12px];
+  }
+
+  .muted {
+    @apply text-muted;
+  }
+
+  .num {
+    @apply tabular-nums;
+  }
+
+  .right {
+    @apply text-right;
+  }
+
+  /* data tables */
+  .data-table {
+    @apply w-full border-collapse text-[13px];
+  }
+
+  .data-table th {
+    @apply whitespace-nowrap border-b border-border px-3 py-2 text-left text-[11px] font-semibold tracking-wide text-muted uppercase;
+  }
+
+  .data-table td {
+    @apply border-b border-border/60 px-3 py-2 align-top;
+  }
+
+  .data-table tbody tr {
+    @apply transition-colors hover:bg-surface-secondary;
+  }
+
+  .data-table .right {
+    @apply text-right;
+  }
+
+  /* key/value definition lists */
+  .kv {
+    @apply m-0 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1.5;
+  }
+
+  .kv-row {
+    @apply contents;
+  }
+
+  .kv dt {
+    @apply font-semibold whitespace-nowrap text-muted;
+  }
+
+  .kv dd {
+    @apply m-0 break-words;
+  }
+
+  .kv dd :any-link {
+    @apply text-accent;
+  }
+
+  /* form layout helpers */
+  .form-grid {
+    @apply grid grid-cols-1 gap-x-4 sm:grid-cols-2;
+  }
+
+  .row {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .row-end {
+    @apply flex flex-wrap items-end gap-2;
+  }
+
+  .form-errors {
+    @apply text-[13px] text-danger;
+  }
+
+  .code-block {
+    @apply max-h-80 overflow-auto font-mono text-[12px] break-words rounded-md border border-border bg-surface-secondary p-3 whitespace-pre-wrap;
+  }
+
+  .section-gap {
+    height: 16px;
+  }
+
+  .btn-link {
+    @apply inline-flex items-center gap-2 rounded-lg border border-border bg-surface-secondary px-3 py-1.5 text-[13px] font-medium text-foreground transition-colors hover:border-muted;
+  }
+}

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { Input, TextArea } from '@heroui/react'
 import { PageHeader, ProjectPicker } from '../components/PageHeader'
-import { Card, Field, Button, Modal, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
+import { Card, Field, Button, Modal, SelectField, useToast, StateBadge, useAsync, EmptyState, Badge } from '../components/ui'
 import { CopyButton, formatTime, kv } from '../components/format'
 import type { Parameter, ParameterPut } from '../api/types'
 import { api } from '../api/client'
@@ -49,35 +50,41 @@ function ParamForm({ project, param, onDone }: { project?: string; param?: Param
     <form onSubmit={submit}>
       <div className="form-grid">
         <Field label="Name" hint="may be hierarchical, e.g. /app/db/pass">
-          <input value={name} disabled={!!param} placeholder="app/db/pass" />
+          <Input value={name} disabled={!!param} placeholder="app/db/pass" />
         </Field>
-        <Field label="Type">
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            <option value="secure_string">secure_string</option>
-            <option value="string">string</option>
-            <option value="string_list">string_list</option>
-          </select>
-        </Field>
+        <SelectField
+          label="Type"
+          value={type}
+          onChange={setType}
+          options={[
+            { value: 'secure_string', label: 'secure_string' },
+            { value: 'string', label: 'string' },
+            { value: 'string_list', label: 'string_list' },
+          ]}
+        />
       </div>
       <Field label={type === 'secure_string' ? 'Value (encrypted at rest)' : 'Value'}>
-        <textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder="value" />
+        <TextArea value={value} onChange={(e) => setValue(e.target.value)} placeholder="value" />
       </Field>
       <div className="form-grid">
         <Field label="Description">
-          <input value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Input value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
-        <Field label="Tier">
-          <select value={tier} onChange={(e) => setTier(e.target.value)}>
-            <option value="standard">standard</option>
-            <option value="advanced">advanced</option>
-          </select>
-        </Field>
+        <SelectField
+          label="Tier"
+          value={tier}
+          onChange={setTier}
+          options={[
+            { value: 'standard', label: 'standard' },
+            { value: 'advanced', label: 'advanced' },
+          ]}
+        />
       </div>
       <Field label="Tags (JSON)" hint='e.g. {"env":"prod"}'>
-        <input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder='{"env":"prod"}' />
+        <Input value={tagsText} onChange={(e) => setTagsText(e.target.value)} placeholder='{"env":"prod"}' />
       </Field>
       {error && <div className="form-errors">{error}</div>}
-      <div className="row-end" style={{ marginTop: 8 }}>
+      <div className="row-end mt-2">
         <Button variant="primary" type="submit" disabled={busy}>
           {busy ? 'Saving…' : param ? 'Save' : 'Create'}
         </Button>
@@ -145,7 +152,7 @@ function ParamDetail({ project, param, onClose }: { project: string; param: Para
       wide
       onClose={onClose}
       title={<span>Parameter <span className="mono">{param.name}</span></span>}
-      footer={<Button variant="ghost" onClick={onClose}>Close</Button>}
+      footer={<Button variant="ghost" onPress={onClose}>Close</Button>}
     >
       {kv([
         ['Status', <StateBadge state={param.status} />],
@@ -159,22 +166,15 @@ function ParamDetail({ project, param, onClose }: { project: string; param: Para
         ['Tags', decodeTags(param.tags)],
       ])}
       {param.data_type === 'secure_string' && (
-        <div className="row" style={{ marginTop: 12 }}>
-          <Button variant="ghost" onClick={toggleDecrypt} disabled={busy}>
-            {decrypt ? 'Hide value' : showSecret ? 'Hide value' : 'Reveal value'}
+        <div className="row mt-3">
+          <Button variant="ghost" onPress={toggleDecrypt} disabled={busy}>
+            {decrypt || showSecret ? 'Hide value' : 'Reveal value'}
           </Button>
           {showSecret && secret !== null && (
             <span className="row">
               <span className="mono code-block" style={{ padding: '6px 10px' }}>{secret}</span>
               <CopyButton text={secret} />
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ border: 0, background: 'none', color: 'var(--muted)', cursor: 'pointer' }}
-                onClick={() => setShowSecret(false)}
-              >
-                hide
-              </button>
+              <Button variant="ghost" size="sm" onPress={() => setShowSecret(false)}>hide</Button>
             </span>
           )}
         </div>
@@ -182,12 +182,12 @@ function ParamDetail({ project, param, onClose }: { project: string; param: Para
       <div className="section-gap" />
       <Card
         title="Version history"
-        actions={<Button variant="ghost" onClick={loadHistory} disabled={busy}>Load history</Button>}
+        actions={<Button variant="ghost" size="sm" onPress={loadHistory} disabled={busy}>Load history</Button>}
       >
         {history === null ? (
           <p className="muted">Every update creates a new immutable version.</p>
         ) : (
-          <table className="data">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Version</th>
@@ -237,16 +237,20 @@ export default function ParamdoraPage() {
   return (
     <div>
       <PageHeader icon="🔐" title="Paramdora" tagline="Parameter store with versioning and AES-256-GCM encryption.">
-        <Button variant="primary" disabled={!project} onClick={() => setCreating(true)}>+ Parameter</Button>
+        <Button variant="primary" disabled={!project} onPress={() => setCreating(true)}>+ Parameter</Button>
       </PageHeader>
       <ProjectPicker service={SERVICE} onSelect={setProject} />
 
       <Card
         title={`Parameters${project ? ` · ${project}` : ''}`}
         actions={
-          <div className="row">
-            <input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="Prefix filter…" style={{ width: 180 }} />
-          </div>
+          <Input
+            className="w-[180px]"
+            variant="secondary"
+            value={prefix}
+            onChange={(e) => setPrefix(e.target.value)}
+            placeholder="Prefix filter…"
+          />
         }
       >
         {params.loading ? (
@@ -258,7 +262,7 @@ export default function ParamdoraPage() {
         ) : (params.data ?? []).length === 0 ? (
           <EmptyState icon="🔑" title="No parameters" hint="Create a parameter to store a value (secure_string is encrypted at rest)." />
         ) : (
-          <table className="data">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -285,9 +289,9 @@ export default function ParamdoraPage() {
                   <td className="muted">{formatTime(p.updated_at)}</td>
                   <td className="right" onClick={(e) => e.stopPropagation()}>
                     <div className="row">
-                      <Button variant="ghost" onClick={() => setViewing(p)}>View</Button>
-                      <Button variant="ghost" onClick={() => setEditing(p)}>Edit</Button>
-                      <Button variant="danger" onClick={() => del(p)}>Delete</Button>
+                      <Button variant="ghost" size="sm" onPress={() => setViewing(p)}>View</Button>
+                      <Button variant="ghost" size="sm" onPress={() => setEditing(p)}>Edit</Button>
+                      <Button variant="danger" size="sm" onPress={() => del(p)}>Delete</Button>
                     </div>
                   </td>
                 </tr>
@@ -297,10 +301,10 @@ export default function ParamdoraPage() {
         )}
       </Card>
 
-      <Modal open={creating} onClose={() => setCreating(false)} title="Create parameter" footer={<Button variant="ghost" onClick={() => setCreating(false)}>Cancel</Button>}>
+      <Modal open={creating} onClose={() => setCreating(false)} title="Create parameter" footer={<Button variant="ghost" onPress={() => setCreating(false)}>Cancel</Button>}>
         <ParamForm project={project} onDone={() => { setCreating(false); params.refetch() }} />
       </Modal>
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit parameter" footer={<Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button>}>
+      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit parameter" footer={<Button variant="ghost" onPress={() => setEditing(null)}>Cancel</Button>}>
         {editing && <ParamForm project={project} param={editing} onDone={() => { setEditing(null); params.refetch() }} />}
       </Modal>
       {viewing && <ParamDetail project={project} param={viewing} onClose={() => setViewing(null)} />}

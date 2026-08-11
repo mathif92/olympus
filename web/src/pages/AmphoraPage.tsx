@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Input } from '@heroui/react'
 import { PageHeader } from '../components/PageHeader'
 import { Card, Field, Button, useToast, EmptyState } from '../components/ui'
 import { formatTime } from '../components/format'
@@ -97,25 +98,24 @@ function UploadForm({ bucket, onUploaded }: { bucket: string; onUploaded: () => 
   }
 
   return (
-    <form onSubmit={submit} className="card">
-      <div className="card-head"><h3>Upload object</h3></div>
-      <div className="card-body">
+    <form onSubmit={submit}>
+      <Card title="Upload object">
         <div className="form-grid">
           <Field label="Key (filename)">
-            <input name="key" placeholder="reports/june.csv" autoComplete="off" />
+            <Input name="key" placeholder="reports/june.csv" autoComplete="off" />
           </Field>
           <Field label="Version id" hint="defaults to LATEST">
-            <input name="version" placeholder="e.g. v1" autoComplete="off" />
+            <Input name="version" placeholder="e.g. v1" autoComplete="off" />
           </Field>
         </div>
         <Field label="File">
-          <input name="file" type="file" />
+          <Input name="file" type="file" />
         </Field>
         {error && <div className="form-errors">{error}</div>}
         <Button variant="primary" type="submit" disabled={busy}>
           {busy ? 'Uploading…' : 'Upload'}
         </Button>
-      </div>
+      </Card>
     </form>
   )
 }
@@ -159,10 +159,9 @@ export default function AmphoraPage() {
   return (
     <div>
       <PageHeader icon="🗄️" title="Amphora" tagline="Object storage — stream files up and down with a SHA-256 ETag.">
-        <div className="field" style={{ margin: 0, minWidth: 200 }}>
-          <span className="field-label">Bucket</span>
-          <input value={bucket} onChange={(e) => setBucket(e.target.value.trim() || 'demo')} placeholder="demo" />
-        </div>
+        <Field label="Bucket" className="mb-0 min-w-[200px]">
+          <Input value={bucket} onChange={(e) => setBucket(e.target.value.trim() || 'demo')} placeholder="demo" />
+        </Field>
       </PageHeader>
 
       <UploadForm bucket={bucket} onUploaded={() => setTick((n) => n + 1)} />
@@ -173,7 +172,7 @@ export default function AmphoraPage() {
         {registry.length === 0 ? (
           <EmptyState icon="🗂️" title="No objects uploaded from this console" hint="Uploads appear here automatically. Amphora stores the file under /object/{bucket}/{key}." />
         ) : (
-          <table className="data">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Key</th>
@@ -193,7 +192,7 @@ export default function AmphoraPage() {
                   <td><span className="mono">{entry.etag}</span></td>
                   <td className="muted">{formatTime(entry.uploadedAt)}</td>
                   <td className="right">
-                    <Button variant="ghost" disabled={downloading === entry.key} onClick={() => download(entry)}>
+                    <Button variant="ghost" size="sm" disabled={downloading === entry.key} onPress={() => download(entry)}>
                       {downloading === entry.key ? '…' : 'Download'}
                     </Button>
                   </td>
@@ -206,7 +205,7 @@ export default function AmphoraPage() {
 
       <div className="section-gap" />
       <Card title="How it works">
-        <p className="muted" style={{ margin: 0 }}>
+        <p className="m-0 text-muted">
           Amphora exposes <span className="mono">PUT /object/{'{bucket}'}/{'{key}'}</span> (streams upload with
           SHA-256) and <span className="mono">GET /object/{'{bucket}'}/{'{key}'}</span> (streams download with range
           support); there is no list or delete endpoint. The ETag is the hex SHA-256 of the content. The object list
