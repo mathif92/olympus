@@ -11,6 +11,7 @@ const OrpheusPage = lazy(() => import('./pages/OrpheusPage'))
 const ClioPage = lazy(() => import('./pages/ClioPage'))
 const MnemePage = lazy(() => import('./pages/MnemePage'))
 const IrisPage = lazy(() => import('./pages/IrisPage'))
+const ThemisPage = lazy(() => import('./pages/ThemisPage'))
 
 function Loading() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="clio" element={<ClioPage />} />
           <Route path="mneme" element={<MnemePage />} />
           <Route path="iris" element={<IrisPage />} />
+          <Route path="themis" element={<ThemisPage />} />
           <Route path="*" element={<Overview />} />
         </Route>
       </Routes>

@@ -11,6 +11,7 @@ export const SERVICE_META: Record<Service, { name: string; icon: string; tagline
   clio: { name: 'Clio', icon: '🗃️', tagline: 'Databases (RDS)' },
   mneme: { name: 'Mneme', icon: '💾', tagline: 'Caches (ElastiCache)' },
   iris: { name: 'Iris', icon: '📨', tagline: 'Messaging (SQS+SNS)' },
+  themis: { name: 'Themis', icon: '⚖️', tagline: 'Identity & access (IAM)' },
 }
 
 export default function AppShell() {

@@ -38,6 +38,7 @@ func main() {
 		"clio":       getenv("CLIO_URL", "http://localhost:8087"),
 		"mneme":      getenv("MNEME_URL", "http://localhost:8088"),
 		"iris":       getenv("IRIS_URL", "http://localhost:8089"),
+		"themis":     getenv("THEMIS_URL", "http://localhost:8091"),
 	}
 
 	proxies := make(map[string]*httputil.ReverseProxy, len(services))

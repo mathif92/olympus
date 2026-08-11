@@ -325,3 +325,102 @@ export interface PublishResult {
   queue_copies: number
   webhook_deliveries: number
 }
+
+// ---- Themis (IAM) -----------------------------------------------------------
+
+export interface ThemisUser {
+  id: string
+  project_id: string
+  name: string
+  description: string
+  path: string
+  tags: Record<string, string>
+  created_at: string
+  updated_at: string
+  status: string
+}
+
+export interface ThemisGroup {
+  id: string
+  project_id: string
+  name: string
+  description: string
+  tags: Record<string, string>
+  created_at: string
+  updated_at: string
+  status: string
+}
+
+export interface ThemisRole {
+  id: string
+  project_id: string
+  name: string
+  description: string
+  tags: Record<string, string>
+  created_at: string
+  updated_at: string
+  status: string
+}
+
+export interface ThemisPolicy {
+  id: string
+  project_id: string
+  name: string
+  description: string
+  document: Record<string, unknown>
+  version: number
+  created_at: string
+  updated_at: string
+  status: string
+}
+
+export interface GroupMembership {
+  group_id: string
+  user_id: string
+  user_name: string
+  created_at: string
+}
+
+export interface PolicyAttachment {
+  id: string
+  project_id: string
+  principal_type: string
+  principal_id: string
+  principal_name: string
+  policy_id: string
+  policy_name: string
+  created_at: string
+}
+
+export interface ThemisAccessKey {
+  id: string
+  project_id: string
+  user_id: string
+  user_name: string
+  secret_access_key?: string
+  status: string
+  last_used_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface EvaluationDecision {
+  allowed: boolean
+  principal: string
+  action: string
+  resource: string
+  matched_statements: string[]
+}
+
+export interface TokenResponse {
+  token: string
+  claims: {
+    sub: string
+    principal_type: string
+    account: string
+    project: string
+    iat: string
+    exp: string
+  }
+  expires_at: string
+}

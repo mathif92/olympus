@@ -1,8 +1,8 @@
 // Thin fetch wrapper over the console gateway. The browser always talks to the
 // same origin (/api/<service>/...), which the gateway reverse-proxies to each
-// backend. All six control-plane services read the tenant from X-Account-Id.
+// backend. All control-plane services read the tenant from X-Account-Id.
 
-export type Service = 'amphora' | 'paramdora' | 'hephaestus' | 'orpheus' | 'clio' | 'mneme' | 'iris'
+export type Service = 'amphora' | 'paramdora' | 'hephaestus' | 'orpheus' | 'clio' | 'mneme' | 'iris' | 'themis'
 
 export const SERVICES: Service[] = [
   'amphora',
@@ -12,6 +12,7 @@ export const SERVICES: Service[] = [
   'clio',
   'mneme',
   'iris',
+  'themis',
 ]
 
 const TENANT_KEY = 'olympus.tenant'
