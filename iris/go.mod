@@ -4,6 +4,7 @@ go 1.25.7
 
 require (
 	github.com/lib/pq v1.10.9
+	github.com/mathif92/olympus/authz v0.0.0-00010101000000-000000000000
 	github.com/pressly/goose/v3 v3.27.3
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.44.0
 )
@@ -65,3 +66,5 @@ require (
 	golang.org/x/sys v0.47.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/mathif92/olympus/authz => ../authz

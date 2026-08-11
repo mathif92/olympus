@@ -7,7 +7,7 @@ IMG  := olympus/themis
 
 # Default connection settings (match docker-compose.yml).
 POSTGRES_DSN ?= host=localhost port=15439 user=olympus password=olympus_secret dbname=olympus_themis sslmode=disable
-JWT_SECRET  ?=
+JWT_SECRET  ?= dev-secret-change-me
 
 ENV = POSTGRES_DSN='$(POSTGRES_DSN)' THEMIS_JWT_SECRET='$(JWT_SECRET)'
 

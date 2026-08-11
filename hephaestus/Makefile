@@ -7,9 +7,11 @@ IMG  := olympus/hephaestus
 
 # Default connection settings (match docker-compose.yml).
 POSTGRES_DSN ?= host=localhost port=15434 user=olympus password=olympus_secret dbname=olympus_compute sslmode=disable
+THEMIS_URL ?= http://localhost:8091
+THEMIS_JWT_SECRET ?= dev-secret-change-me
 PROVISIONER ?= mock
 
-ENV = POSTGRES_DSN='$(POSTGRES_DSN)' PROVISIONER='$(PROVISIONER)'
+ENV = POSTGRES_DSN='$(POSTGRES_DSN)' PROVISIONER='$(PROVISIONER)' THEMIS_URL='$(THEMIS_URL)' THEMIS_JWT_SECRET='$(THEMIS_JWT_SECRET)'
 
 .PHONY: help build run fmt vet test test-it infra-up infra-down \
         docker-build up down clean

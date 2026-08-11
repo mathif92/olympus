@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mathif92/olympus/authz"
 	"github.com/mathif92/olympus/clio/internal/handler"
 	"github.com/mathif92/olympus/clio/pkg"
 	"github.com/mathif92/olympus/clio/pkg/database"
@@ -53,8 +54,13 @@ func main() {
 	clio := pkg.NewClio(dbClient, provisioner)
 	ch := handler.NewClioHandler(clio)
 
-	mux := ch.Router()
+	// Every control-plane request is authorized against Themis: the bearer JWT
+	// is verified locally, then the action/resource is checked with Themis
+	// /authorize (fail closed - no token, deny, or Themis outage all reject).
+	authzClient := authz.NewClient(getenv("THEMIS_URL", "http://localhost:8091"), getenv("THEMIS_JWT_SECRET", ""))
+	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(dbClient, provisioner))
+	mux.Handle("/", authzClient.Middleware(authz.ServiceMapper("clio"))(ch.Router()))
 
 	log.Printf("📚 Clio running on %s (provisioner: %T)...", *addr, provisioner)
 	if err := http.ListenAndServe(*addr, mux); err != nil {

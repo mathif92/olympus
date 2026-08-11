@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mathif92/olympus/authz"
 	"github.com/mathif92/olympus/iris/internal/handler"
 	"github.com/mathif92/olympus/iris/pkg"
 	"github.com/mathif92/olympus/iris/pkg/database"
@@ -44,8 +45,13 @@ func main() {
 	iris := pkg.NewIris(dbClient)
 	ch := handler.NewIrisHandler(iris)
 
-	mux := ch.Router()
+	// Every control-plane request is authorized against Themis: the bearer JWT
+	// is verified locally, then the action/resource is checked with Themis
+	// /authorize (fail closed - no token, deny, or Themis outage all reject).
+	authzClient := authz.NewClient(getenv("THEMIS_URL", "http://localhost:8091"), getenv("THEMIS_JWT_SECRET", ""))
+	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(dbClient))
+	mux.Handle("/", authzClient.Middleware(authz.ServiceMapper("iris"))(ch.Router()))
 
 	log.Printf("Iris running on %s...", *addr)
 	if err := http.ListenAndServe(*addr, mux); err != nil {

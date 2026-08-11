@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mathif92/olympus/authz"
 	"github.com/mathif92/olympus/paramdora/internal/handler"
 	"github.com/mathif92/olympus/paramdora/pkg"
 	"github.com/mathif92/olympus/paramdora/pkg/database"
@@ -53,8 +54,13 @@ func main() {
 	store := pkg.NewParamStore(dbClient, cipher)
 	ph := handler.NewParamdoraHandler(store)
 
-	mux := ph.Router()
+	// Every control-plane request is authorized against Themis: the bearer JWT
+	// is verified locally, then the action/resource is checked with Themis
+	// /authorize (fail closed - no token, deny, or Themis outage all reject).
+	authzClient := authz.NewClient(getenv("THEMIS_URL", "http://localhost:8091"), getenv("THEMIS_JWT_SECRET", ""))
+	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(dbClient))
+	mux.Handle("/", authzClient.Middleware(authz.ServiceMapper("paramdora"))(ph.Router()))
 
 	log.Printf("🪷 Paramdora running on %s (db: %s)...", *addr, dbCfg.PostgresURL)
 	if err := http.ListenAndServe(*addr, mux); err != nil {

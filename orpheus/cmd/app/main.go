@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mathif92/olympus/authz"
 	"github.com/mathif92/olympus/orpheus/internal/handler"
 	"github.com/mathif92/olympus/orpheus/pkg"
 	"github.com/mathif92/olympus/orpheus/pkg/database"
@@ -60,8 +61,13 @@ func main() {
 	orpheus := pkg.NewOrpheus(dbClient, provisioner)
 	ch := handler.NewOrpheusHandler(orpheus)
 
-	mux := ch.Router()
+	// Every control-plane request is authorized against Themis: the bearer JWT
+	// is verified locally, then the action/resource is checked with Themis
+	// /authorize (fail closed - no token, deny, or Themis outage all reject).
+	authzClient := authz.NewClient(getenv("THEMIS_URL", "http://localhost:8091"), getenv("THEMIS_JWT_SECRET", ""))
+	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(dbClient, provisioner))
+	mux.Handle("/", authzClient.Middleware(authz.ServiceMapper("orpheus"))(ch.Router()))
 
 	log.Printf("🎼 Orpheus running on %s (provisioner: %T)...", *addr, provisioner)
 	if err := http.ListenAndServe(*addr, mux); err != nil {

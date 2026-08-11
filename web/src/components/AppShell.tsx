@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Input, Toast } from '@heroui/react'
-import { getTenant, setTenant, SERVICES, type Service } from '../api/client'
+import { getTenant, setTenant, getAuth, setAuth, onAuthRequired, SERVICES, type Service, type StoredAuth } from '../api/client'
+import { Badge, Button } from './ui'
+import SignInModal from './SignInModal'
 
 export const SERVICE_META: Record<Service, { name: string; icon: string; tagline: string }> = {
   amphora: { name: 'Amphora', icon: '🗄️', tagline: 'Object storage (S3)' },
@@ -16,10 +18,24 @@ export const SERVICE_META: Record<Service, { name: string; icon: string; tagline
 
 export default function AppShell() {
   const [tenant, setTenantState] = useState(getTenant())
+  const [auth, setAuthState] = useState<StoredAuth | null>(() => getAuth())
+  const [signInOpen, setSignInOpen] = useState(false)
+
+  useEffect(() => {
+    const unsub = onAuthRequired(() => {
+      // A stored session stopped being accepted (expired/revoked): drop it and
+      // prompt for fresh credentials.
+      setAuth(null)
+      setAuthState(null)
+      setSignInOpen(true)
+    })
+    return unsub
+  }, [])
 
   return (
     <>
       <Toast.Provider placement="bottom end" />
+      <SignInModal open={signInOpen} onClose={() => setSignInOpen(false)} />
       <div className="grid min-h-screen grid-cols-[232px_1fr] bg-background text-foreground">
         <aside className="sticky top-0 flex h-screen flex-col gap-3.5 self-start border-r border-border bg-surface px-2.5 py-4">
           <NavLink to="/" className="flex items-center gap-2.5 px-2 py-1 text-foreground">
@@ -60,7 +76,12 @@ export default function AppShell() {
         </aside>
         <div className="flex min-w-0 flex-col">
           <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-border bg-surface px-6 py-3">
-            <div className="text-xs text-muted">Olympus platform · operating console</div>
+            <div className="flex items-center gap-3 text-xs text-muted">
+              <span>Olympus platform · operating console</span>
+              {!auth && (
+                <Badge tone="warn">not signed in — service calls require a Themis token</Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-xs text-muted">
               <span>Tenant</span>
               <Input
@@ -75,6 +96,18 @@ export default function AppShell() {
                 placeholder="default"
                 aria-label="Account id"
               />
+              {auth ? (
+                <>
+                  <Badge tone="ok">{auth.subject}</Badge>
+                  <Button variant="ghost" size="sm" onPress={() => { setAuth(null); setAuthState(null) }}>
+                    Sign out
+                  </Button>
+                </>
+              ) : (
+                <Button variant="primary" size="sm" onPress={() => setSignInOpen(true)}>
+                  Sign in
+                </Button>
+              )}
             </div>
           </header>
           <div className="w-full max-w-[1200px] p-6">

@@ -67,9 +67,9 @@ type EvaluationDecision struct {
 // If no statement matches, access is denied by default (implicit deny).
 func EvaluatePolicies(docs []*PolicyDocument, action, resource string) EvaluationDecision {
 	var (
-		allowed   bool
-		denied    bool
-		matched   []string
+		allowed bool
+		denied  bool
+		matched []string
 	)
 	for _, doc := range docs {
 		if doc == nil {
@@ -93,8 +93,8 @@ func EvaluatePolicies(docs []*PolicyDocument, action, resource string) Evaluatio
 		}
 	}
 	return EvaluationDecision{
-		Allowed:   allowed && !denied,
-		Matched:   matched,
+		Allowed: allowed && !denied,
+		Matched: matched,
 	}
 }
 

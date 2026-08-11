@@ -13,10 +13,13 @@ MINIO_ACCESS  ?= olympus_admin
 MINIO_SECRET  ?= olympus_secret_admin
 MINIO_BUCKET  ?= olympus
 BACKEND       ?= minio
+THEMIS_URL    ?= http://localhost:8091
+THEMIS_JWT_SECRET ?= dev-secret-change-me
 
 ENV = STORAGE_BACKEND=$(BACKEND) POSTGRES_DSN='$(POSTGRES_DSN)' REDIS_URL=$(REDIS_URL) \
       MINIO_ENDPOINT=$(MINIO_ENDPOINT) MINIO_ACCESS_KEY=$(MINIO_ACCESS) \
-      MINIO_SECRET_KEY=$(MINIO_SECRET) MINIO_BUCKET=$(MINIO_BUCKET)
+      MINIO_SECRET_KEY=$(MINIO_SECRET) MINIO_BUCKET=$(MINIO_BUCKET) \
+      THEMIS_URL=$(THEMIS_URL) THEMIS_JWT_SECRET='$(THEMIS_JWT_SECRET)'
 
 .PHONY: help build run fmt vet test test-it infra-up infra-down \
         reconcile reconcile-repair backfill-etag docker-build up down image

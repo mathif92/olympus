@@ -36,7 +36,11 @@ tests/integration/         # testcontainers end-to-end tests
   implicit-deny by default, explicit deny overrides allow, wildcards use
   trailing-`*` prefix matching.
 - `THEMIS_JWT_SECRET` controls token signing; if unset a random one-shot secret
-  is generated (tokens become unverifiable after restart).
+  is generated (tokens become unverifiable after restart). The Makefile defaults
+  it to `dev-secret-change-me` so the other services (shared `authz` middleware)
+  can verify tokens in local dev — keep it in sync everywhere.
+- `Authorize` resolves the project by name **or** ID (JWT claims carry the
+  project ID), always scoped to the calling account (`X-Account-Id`).
 - Audit rows are best-effort (`_ = s.Audit(...)`); they never fail a request.
 
 ## Commands

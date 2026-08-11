@@ -104,14 +104,14 @@ type PolicyAttachment struct {
 // AccessKey is an AWS-style credential pair. The secret is never stored; only
 // SecretHash is persisted. Secret is populated transiently at creation.
 type AccessKey struct {
-	ID         string    `json:"id"`
-	ProjectID  string    `json:"project_id"`
-	UserID     string    `json:"user_id"`
-	UserName   string    `json:"user_name,omitempty"`
-	SecretHash string    `json:"-"`
-	Secret     string    `json:"secret_access_key,omitempty"`
-	Status     string    `json:"status"`
+	ID         string     `json:"id"`
+	ProjectID  string     `json:"project_id"`
+	UserID     string     `json:"user_id"`
+	UserName   string     `json:"user_name,omitempty"`
+	SecretHash string     `json:"-"`
+	Secret     string     `json:"secret_access_key,omitempty"`
+	Status     string     `json:"status"`
 	LastUsedAt *time.Time `json:"last_used_at"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }

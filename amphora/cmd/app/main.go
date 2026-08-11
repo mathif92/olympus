@@ -13,6 +13,7 @@ import (
 	"github.com/mathif92/olympus/amphora/internal/handler"
 	"github.com/mathif92/olympus/amphora/pkg"
 	"github.com/mathif92/olympus/amphora/pkg/database"
+	"github.com/mathif92/olympus/authz"
 )
 
 const storageBaseDir = "storage/data"
@@ -87,9 +88,14 @@ func main() {
 
 	// Create object handler and health handler for connectivity checks.
 	objHandler := handler.NewObjectHandler(service)
+
+	// Object traffic is authorized against Themis: the bearer JWT is verified
+	// locally, then the action/resource is checked with Themis /authorize (fail
+	// closed - no token, deny, or Themis outage all reject).
+	authzClient := authz.NewClient(getenv("THEMIS_URL", "http://localhost:8091"), getenv("THEMIS_JWT_SECRET", ""))
 	mux := http.NewServeMux()
-	mux.HandleFunc("/object/", objHandler.HandleFunc)
 	mux.HandleFunc("/health", healthHandler(dbClient, backend))
+	mux.Handle("/object/", authzClient.Middleware(authz.ServiceMapper("amphora"))(http.HandlerFunc(objHandler.HandleFunc)))
 
 	log.Printf("🚀 Amphora running on :8080 (backend: %T)...", backend)
 	if err := http.ListenAndServe(":8080", mux); err != nil {
