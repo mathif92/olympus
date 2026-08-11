@@ -103,10 +103,11 @@ func (s *ThemisStore) CreateProject(ctx context.Context, accountID string, p dat
 	}
 	p.ID = newID()
 	p.AccountID = accountID
-	_, err := s.DB.Exec(ctx, `
+	err := s.DB.QueryRow(ctx, `
 		INSERT INTO projects (id, account_id, name, description)
-		VALUES ($1, $2, $3, $4)`,
-		p.ID, p.AccountID, p.Name, p.Description)
+		VALUES ($1, $2, $3, $4)
+		RETURNING created_at`,
+		p.ID, p.AccountID, p.Name, p.Description).Scan(&p.CreatedAt)
 	return err
 }
 
@@ -268,10 +269,11 @@ func (s *ThemisStore) CreateUser(ctx context.Context, accountID, projectName str
 		Tags:        in.Tags,
 		Status:      "active",
 	}
-	if _, err := s.DB.Exec(ctx, `
+	if err := s.DB.QueryRow(ctx, `
 		INSERT INTO users (id, project_id, name, description, path, tags)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
-		u.ID, proj.ID, u.Name, u.Description, u.Path, wrapTags(in.Tags)); err != nil {
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING created_at, updated_at`,
+		u.ID, proj.ID, u.Name, u.Description, u.Path, wrapTags(in.Tags)).Scan(&u.CreatedAt, &u.UpdatedAt); err != nil {
 		return nil, err
 	}
 	_ = s.refreshProjectCount(ctx, proj.ID)
@@ -357,10 +359,11 @@ func (s *ThemisStore) CreateGroup(ctx context.Context, accountID, projectName st
 		Tags:        in.Tags,
 		Status:      "active",
 	}
-	if _, err := s.DB.Exec(ctx, `
+	if err := s.DB.QueryRow(ctx, `
 		INSERT INTO groups (id, project_id, name, description, tags)
-		VALUES ($1, $2, $3, $4, $5)`,
-		g.ID, proj.ID, g.Name, g.Description, wrapTags(in.Tags)); err != nil {
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING created_at, updated_at`,
+		g.ID, proj.ID, g.Name, g.Description, wrapTags(in.Tags)).Scan(&g.CreatedAt, &g.UpdatedAt); err != nil {
 		return nil, err
 	}
 	_ = s.refreshProjectCount(ctx, proj.ID)
@@ -523,10 +526,11 @@ func (s *ThemisStore) CreateRole(ctx context.Context, accountID, projectName str
 		Tags:        in.Tags,
 		Status:      "active",
 	}
-	if _, err := s.DB.Exec(ctx, `
+	if err := s.DB.QueryRow(ctx, `
 		INSERT INTO roles (id, project_id, name, description, tags)
-		VALUES ($1, $2, $3, $4, $5)`,
-		r.ID, proj.ID, r.Name, r.Description, wrapTags(in.Tags)); err != nil {
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING created_at, updated_at`,
+		r.ID, proj.ID, r.Name, r.Description, wrapTags(in.Tags)).Scan(&r.CreatedAt, &r.UpdatedAt); err != nil {
 		return nil, err
 	}
 	_ = s.refreshProjectCount(ctx, proj.ID)
@@ -621,10 +625,11 @@ func (s *ThemisStore) CreatePolicy(ctx context.Context, accountID, projectName s
 		Status:      "active",
 	}
 	docJSON, _ := json.Marshal(doc)
-	if _, err := s.DB.Exec(ctx, `
+	if err := s.DB.QueryRow(ctx, `
 		INSERT INTO policies (id, project_id, name, description, document)
-		VALUES ($1, $2, $3, $4, $5)`,
-		p.ID, proj.ID, p.Name, p.Description, string(docJSON)); err != nil {
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING created_at, updated_at`,
+		p.ID, proj.ID, p.Name, p.Description, string(docJSON)).Scan(&p.CreatedAt, &p.UpdatedAt); err != nil {
 		return nil, err
 	}
 	_ = s.refreshProjectCount(ctx, proj.ID)
@@ -837,10 +842,11 @@ func (s *ThemisStore) CreateAccessKey(ctx context.Context, accountID, projectNam
 		Secret:     secret,
 		Status:     "active",
 	}
-	if _, err := s.DB.Exec(ctx, `
+	if err := s.DB.QueryRow(ctx, `
 		INSERT INTO access_keys (id, project_id, user_id, secret_hash, status)
-		VALUES ($1, $2, $3, $4, $5)`,
-		k.ID, proj.ID, u.ID, k.SecretHash, k.Status); err != nil {
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING created_at, updated_at`,
+		k.ID, proj.ID, u.ID, k.SecretHash, k.Status).Scan(&k.CreatedAt, &k.UpdatedAt); err != nil {
 		return nil, err
 	}
 	return k, nil
@@ -890,17 +896,22 @@ func (s *ThemisStore) SetAccessKeyStatus(ctx context.Context, accountID, project
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.DB.Exec(ctx, `
-		UPDATE access_keys SET status = $3, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $1 AND user_id = $2`,
-		keyID, u.ID, status)
+	var k database.AccessKey
+	err = s.DB.QueryRow(ctx, `
+		UPDATE access_keys
+		SET status = $3, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1 AND user_id = $2
+		RETURNING id, project_id, user_id, status, last_used_at, created_at, updated_at`,
+		keyID, u.ID, status).Scan(
+		&k.ID, &k.ProjectID, &k.UserID, &k.Status, &k.LastUsedAt, &k.CreatedAt, &k.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return nil, ErrNotFound
-	}
-	return &database.AccessKey{ID: keyID, Status: status}, nil
+	k.UserName = u.Name
+	return &k, nil
 }
 
 // DeleteAccessKey permanently removes a key.
