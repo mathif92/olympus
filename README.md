@@ -54,6 +54,48 @@ Each service is stateless, scales horizontally, and keeps its state in
 Postgres. Internal references stay mythological (the Greek gods dwell on
 Olympus; they forged, stored, and safeguarded here).
 
+## Maturity & roadmap
+
+This is a working **control-plane skeleton** with one fully real data path
+(IAM + object storage). It runs end to end, exercises cleanly through the
+console, and deploys with one command — but it is not yet a production cloud.
+
+**What is real today**
+
+- Themis IAM (identities, policies, access keys, JWTs) enforced on every
+  service via the shared `authz` module (fail-closed).
+- Amphora object storage backed by MinIO (streaming I/O, ETag hashing, atomic
+  metadata writes).
+- Multi-tenant Postgres-backed CRUD across all services, audit logs, goose
+  schema management.
+- One-command install into any Kubernetes cluster (`deploy/install.sh`) or the
+  documented bare-VM layout.
+
+**What is still stubbed / pending**
+
+- Hephaestus, Orpheus, Clio, Mneme ship **mock provisioners** by default: the
+  control planes and console panels are fully usable, but no compute / managed
+  DB / managed cache / managed K8s resources actually exist until you enable
+  the `docker` / `kube` provisioners (host Docker socket or kubeconfig).
+- Single-node Postgres, single-node MinIO, single-node Redis — no HA, no
+  failover, no backups/DR for the data plane.
+- No TLS by default, no key/secret rotation, no service-to-service auth beyond
+  the shared `THEMIS_JWT_SECRET`.
+- No real observability stack (metrics/tracing/log aggregation) and no upgrade
+  path beyond `helm upgrade`.
+
+**Planned next**
+
+1. Real provisioners: compute (Hephaestus), managed DBs/caches (Clio/Mneme),
+   managed K8s (Orpheus) — as first-class resources, not mocks.
+2. Data-plane HA: Postgres replication + failover, MinIO distributed mode,
+   backups + restore.
+3. TLS everywhere, per-service credentials, secret rotation.
+4. Observability: metrics, tracing, central logs, dashboards.
+
+This list lives here so the state is explicit: treat the platform as an
+exerciseable early-stage system, not a hardened product.
+
 ## Services
 
 | Service    | Port      | Postgres (host) | What it does                                          | Module                              |

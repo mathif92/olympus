@@ -160,6 +160,13 @@ exerciseable through the console without needing a Docker daemon inside the
 cluster. See [Enabling real provisioners](#enabling-real-provisioners) below
 to wire live Docker-based provisioning.
 
+> Maturity: this is an early-stage platform skeleton. IAM (Themis) and object
+> storage (Amphora→MinIO) are fully real; the compute / managed-DB / managed-
+> cache / managed-K8s control planes are mock-by-default; the data plane is
+> single-node (no HA, backups or failover); no TLS, key rotation or
+> observability stack by default. See the "Maturity & roadmap" section in the
+> root README. Treat this as exerciseable, not production-hardened.
+
 ## Prerequisites
 
 - A Kubernetes cluster (any CNCF-conformant distribution; all objects are
