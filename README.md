@@ -42,9 +42,13 @@ Olympus provides the classic building blocks of a cloud, one service at a time:
   drives every service from one place: single sign-through via `X-Account-Id`
   (or a Themis token), one panel per service, browsing and operating real
   resources end to end.
-- **Deploy it anywhere** — a Helm umbrella chart under `deploy/helm/` installs
-  the whole platform into a Kubernetes cluster (all services + bundled
-  Postgres/Redis/MinIO) with a single `helm install`.
+- **Deploy it anywhere** — install the whole platform into any Kubernetes
+  cluster (all services + bundled Postgres/Redis/MinIO) with a single command:
+  `deploy/install.sh` on kind/minikube/Docker Desktop, or `--registry` on any
+  cloud cluster. The `deploy/helm/olympus` umbrella chart backs it. See
+  [deploy/helm/INSTALL.md](deploy/helm/INSTALL.md) — which also sketches the
+  no-Kubernetes option of running the plain Go binaries across a small cluster
+  of VMs/servers.
 
 Each service is stateless, scales horizontally, and keeps its state in
 Postgres. Internal references stay mythological (the Greek gods dwell on

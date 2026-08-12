@@ -41,6 +41,8 @@ spec:
                   key: THEMIS_JWT_SECRET
             - name: PROVISIONER
               value: {{ .Values.provisioner | quote }}
+            - name: PROMETHEUS_IMAGE_PREFIX
+              value: {{ .Values.imagePrefix | quote }}
             {{- if eq .Values.provisioner "docker" }}
             - name: DOCKER_HOST
               value: {{ printf "unix://%s" .Values.dockerHostSocket | quote }}

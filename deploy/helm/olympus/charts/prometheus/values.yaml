@@ -11,9 +11,7 @@ provisioner: mock
 # HostPath to the node's Docker daemon socket, mounted into the pod when
 # provisioner=docker. /var/run/docker.sock on most nodes.
 dockerHostSocket: /var/run/docker.sock
-env:
-  - name: PROMETHEUS_IMAGE_PREFIX
-    value: olympus/prometheus-fn
+imagePrefix: olympus/prometheus-fn
 serviceAccount:
   create: true
   name: ""

@@ -6,6 +6,137 @@ single Helm umbrella chart that installs all ten services plus the bundled
 PostgreSQL (one database per service), Redis (cache) and MinIO (object storage
 backends).
 
+## Fastest way: one command
+
+> Requires `kubectl`, `helm` and `docker`. Works against any cluster.
+
+```bash
+# local cluster (kind / minikube / Docker Desktop): build + load images
+./deploy/install.sh --context minikube
+
+# any remote cluster: build + push to a registry you own
+./deploy/install.sh --context <cluster> --registry ghcr.io/<you>/olympus
+
+# cluster that can already pull prebuilt images
+./deploy/install.sh --context <cluster> --image-prefix ghcr.io/<you>/olympus --skip-build
+```
+
+The installer sanity-checks your tooling and the target cluster, asks you to
+confirm the target (it refuses to touch staging/production-looking contexts),
+builds all ten service images, generates secrets once (kept in
+`~/.olympus/secrets-<release>.env` for reuse), runs `helm install` and prints
+the console URL plus next steps. See `./deploy/install.sh --help` for all flags
+(`--namespace`, `--release`, `--ingress`, `--values`, `--set`, `--dry-run`, ...).
+The remainder of this guide covers the manual, step-by-step path if you prefer
+to drive the Helm chart directly.
+
+## Without Kubernetes: bare binaries on VMs/servers
+
+If you don't run Kubernetes at all, every service is a plain Go binary with no
+K8s-specific dependencies — you can stand the platform up "old school" by
+running the compiled binaries directly across a small cluster of VMs or
+servers. This is a **pending / manual** approach: there is no script or
+orchestration for it yet, so you drive each process yourself (systemd,
+supervisord, or a plain `nohup`). Everything else in this doc assumes the Helm
+chart — this section is for the no-Kubernetes case only.
+
+### Layout
+
+Two VM roles:
+
+| Role | Hosts what |
+| ---- | ---------- |
+| **Data plane** | PostgreSQL (all 9 service databases), Redis, MinIO |
+| **Control plane** | the ten service binaries |
+
+Within the control plane there are no hard rules about which service goes on
+which machine — they only talk to each other and to the data plane over TCP, so
+you can colocate all of them on one box for testing, or spread them one-per-VM
+or in any grouping that suits you, as long as they can resolve each other.
+
+### The wiring contract
+
+Each service is configured by environment variables — exactly the ones the
+Helm chart sets for the in-cluster pods (see each subchart's
+`templates/deployment.yaml`). The essentials, common to all services:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `POSTGRES_DSN` | libpq DSN to the service's own database, e.g. `host=10.0.0.5 port=5432 user=olympus password=... dbname=olympus_themis sslmode=disable`. |
+| `THEMIS_URL` | Base URL of the Themis IAM service, e.g. `http://10.0.0.11:8091`. |
+| `THEMIS_JWT_SECRET` | Shared HMAC secret every service uses to verify JWTs. Must match cluster-wide. |
+
+Each service uses its **own** database on the shared Postgres (one of the nine
+`olympus_*` databases the chart creates):
+
+| Service | Port | Database | Extra env (beyond the common three) |
+| ------- | ---- | -------- | ----------------------------------- |
+| Themis | 8091 | `olympus_themis` | — |
+| Amphora | 8080 | `olympus_storage` | `REDIS_URL`, `STORAGE_BACKEND`, `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` |
+| Paramdora | 8083 | `olympus_parameters` | — |
+| Hephaestus | 8084 | `olympus_compute` | `PROVISIONER` |
+| Orpheus | 8086 | `olympus_orchestration` | `PROVISIONER` |
+| Clio | 8087 | `olympus_databases` | `PROVISIONER`, `DOCKER_HOST` |
+| Mneme | 8088 | `olympus_caches` | `PROVISIONER`, `DOCKER_HOST` |
+| Iris | 8089 | `olympus_messaging` | — |
+| Prometheus | 8092 | `olympus_functions` | `PROVISIONER`, `DOCKER_HOST`, `PROMETHEUS_IMAGE_PREFIX` |
+| Console | 8090 | — (no DB) | `THEMIS_URL`, and one `<SERVICE>_URL` per backend, e.g. `AMPHORA_URL=http://10.0.0.11:8080`, `THEMIS_URL=http://10.0.0.11:8091`, ... |
+
+So on a control-plane VM the runtime is, e.g. for Amphora:
+
+```bash
+set -a; source /opt/olympus/.env; set +a   # shared on every host
+export POSTGRES_DSN="host=10.0.0.5 port=5432 user=olympus password=$PG_PASSWORD dbname=olympus_storage sslmode=disable"
+export THEMIS_URL="http://10.0.0.11:8091"
+export STORAGE_BACKEND=minio
+export REDIS_URL="redis://10.0.0.5:6379"
+export MINIO_ENDPOINT="http://10.0.0.5:9000"
+/opt/olympus/amphora
+```
+
+Keep a shared `.env` sourced on every control-plane host so `THEMIS_URL` and
+`THEMIS_JWT_SECRET` stay identical everywhere. See each subchart's
+`templates/deployment.yaml` and `values.yaml` for the authoritative list — the
+env names may drift between versions.
+
+### Steps
+
+```bash
+# 1. Build the binaries on a build host
+for svc in themis amphora paramdora hephaestus orpheus clio mneme iris prometheus; do
+  (cd $svc && CGO_ENABLED=0 go build -o /out/$svc ./cmd/app)
+done
+(cd console && CGO_ENABLED=0 go build -o /out/console ./cmd/console)   # console builds from ./cmd/console
+
+# 2. Ship the /out binaries + a shared .env to each machine, e.g.
+scp /out/* root@vm1:/opt/olympus/
+scp /out/* root@vm2:/opt/olympus/
+```
+
+Then on the data-plane VM run Postgres/Redis/MinIO (packaged, or via the same
+images they would use in Kubernetes), and on each control-plane VM:
+
+```bash
+# source the same shared env on every host
+set -a; source /opt/olympus/.env; set +a
+# example: run Amphora on this box
+/opt/olympus/amphora
+```
+
+### What's NOT covered here
+
+- No systemd unit files, no log rotation, no TLS, no reverse proxy in front of
+  the console, no upgrade path, no failover for the data-plane services
+  (Postgres/Redis/MinIO are each a single instance today).
+- No provisioning automation — you place binaries and env yourself.
+- The `docker` provisioners of Clio/Mneme/Prometheus need a Docker daemon
+  reachable from that service (e.g. `DOCKER_HOST`), same caveat as the
+  cluster path below.
+
+Treat this as a reference for feasibility, not a supported deployment story.
+The Helm chart remains the supported path, and `deploy/install.sh` is the
+one-command way into it.
+
 ## What you get
 
 | Component      | Notes |
