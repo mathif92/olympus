@@ -1,0 +1,6 @@
+.git
+**/node_modules
+**/dist
+*.log
+*.tar
+.DS_Store

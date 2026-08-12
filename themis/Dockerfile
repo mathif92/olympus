@@ -1,13 +1,14 @@
 # Syntax: docker/dockerfile:1
 
 # --- build stage ---
-FROM golang:1.23-alpine AS build
+FROM golang:1.26-alpine AS build
 WORKDIR /src
 
-COPY go.mod go.sum ./
+# authz is a local replace target (go.mod: replace ... => ../authz)
+COPY themis/go.mod themis/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY themis/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/themis ./cmd/app
 
 # --- runtime stage ---
@@ -18,7 +19,7 @@ RUN apk add --no-cache ca-certificates tzdata && \
 WORKDIR /app
 COPY --from=build /out/themis /app/themis
 # goose migration files are mounted from this dir at startup.
-COPY migrations /app/migrations
+COPY themis/migrations /app/migrations
 
 USER 10001:10001
 EXPOSE 8091
