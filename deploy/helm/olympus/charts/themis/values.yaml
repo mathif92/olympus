@@ -1,0 +1,17 @@
+image:
+  repository: olympus/themis
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+port: 8091
+dbname: olympus_themis
+serviceAccount:
+  create: true
+  name: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

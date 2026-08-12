@@ -1,0 +1,95 @@
+# Olympus platform - umbrella chart values.
+#
+# The umbrella installs a bundled PostgreSQL (all service databases), Redis
+# (Amphora cache) and MinIO (Amphora storage pods) by default. For BYO
+# infrastructure, set postgres.enabled / redis.enabled / minio.enabled to
+# false and point the relevant service values at your endpoints.
+#
+# `global.*` values are visible to every (sub)chart, so postgres credentials
+# and the JWT secret are single-sourced here.
+
+global:
+  # Shared JWT secret that Themis signs with and every service verifies. Override
+  # in production: --set global.jwtSecret=$(openssl rand -hex 32)
+  jwtSecret: dev-secret-change-me
+  postgres:
+    host: ""
+    port: 5432
+    user: olympus
+    password: olympus_secret
+  themis:
+    # Left empty to resolve to the bundled themis (http://<release>-themis:8091).
+    url: ""
+  minio:
+    accessKey: olympus_admin
+    secretKey: olympus_secret_admin
+    bucket: olympus
+    region: ""
+    port: 9000
+    endpoint: ""
+
+# --- Per-service enable + overrides (thin; services are subcharts) ---
+amphora: { enabled: true }
+paramdora: { enabled: true }
+hephaestus: { enabled: true }
+orpheus: { enabled: true }
+clio: { enabled: true }
+mneme: { enabled: true }
+iris: { enabled: true }
+themis: { enabled: true }
+prometheus: { enabled: true }
+console: { enabled: true }
+
+# --- Bundled infrastructure ---
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  storageSize: 10Gi
+  storageClass: ""
+  dbname: olympus_storage
+  service:
+    port: 5432
+  extraDatabases:
+    - olympus_parameters
+    - olympus_compute
+    - olympus_orchestration
+    - olympus_databases
+    - olympus_caches
+    - olympus_messaging
+    - olympus_themis
+    - olympus_functions
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  service:
+    port: 6379
+
+minio:
+  enabled: true
+  image: minio/minio
+  tag: RELEASE.2025-04-22T22-12-26Z
+  distributedNodes: 1
+  storageSize: 10Gi
+  storageClass: ""
+  service:
+    port: 9000
+  consolePort: 9001
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: { }
+  hosts:
+    - host: olympus.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [ ]
+
+# Whether Amphora/Hephaestus/Prometheus may use the host's Docker daemon for
+# real provisioning/execution (mounts /var/run/docker.sock). Disable to keep
+# everything in mock mode.
+docker:
+  useHostDaemon: false
+  hostSocket: /var/run/docker.sock

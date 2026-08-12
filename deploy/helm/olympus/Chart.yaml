@@ -1,0 +1,50 @@
+apiVersion: v2
+name: olympus
+description: Olympus on-premise cloud platform - umbrella chart installing all services (amphora, paramdora, hephaestus, orpheus, clio, mneme, iris, themis, prometheus, console) plus bundled PostgreSQL and MinIO
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - storage
+  - object-storage
+  - s3
+  - compute
+  - kubernetes
+  - serverless
+  - iam
+  - messaging
+home: https://github.com/mathif92/olympus
+maintainers:
+  - name: Olympus Team
+    email: team@olympus.example.com
+dependencies:
+  - name: amphora
+    version: 0.1.0
+    condition: amphora.enabled
+  - name: paramdora
+    version: 0.1.0
+    condition: paramdora.enabled
+  - name: hephaestus
+    version: 0.1.0
+    condition: hephaestus.enabled
+  - name: orpheus
+    version: 0.1.0
+    condition: orpheus.enabled
+  - name: clio
+    version: 0.1.0
+    condition: clio.enabled
+  - name: mneme
+    version: 0.1.0
+    condition: mneme.enabled
+  - name: iris
+    version: 0.1.0
+    condition: iris.enabled
+  - name: themis
+    version: 0.1.0
+    condition: themis.enabled
+  - name: prometheus
+    version: 0.1.0
+    condition: prometheus.enabled
+  - name: console
+    version: 0.1.0
+    condition: console.enabled

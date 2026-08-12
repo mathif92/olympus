@@ -1,0 +1,6 @@
+apiVersion: v2
+name: console
+description: Console - web console (Go gateway + built React SPA) for the Olympus platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -42,6 +42,9 @@ Olympus provides the classic building blocks of a cloud, one service at a time:
   drives every service from one place: single sign-through via `X-Account-Id`
   (or a Themis token), one panel per service, browsing and operating real
   resources end to end.
+- **Deploy it anywhere** — a Helm umbrella chart under `deploy/helm/` installs
+  the whole platform into a Kubernetes cluster (all services + bundled
+  Postgres/Redis/MinIO) with a single `helm install`.
 
 Each service is stateless, scales horizontally, and keeps its state in
 Postgres. Internal references stay mythological (the Greek gods dwell on
@@ -124,6 +127,7 @@ olympus/
   ├── themis/        Themis           – IAM: identities, policies, access keys, JWTs
   ├── prometheus/    Prometheus       – serverless functions (Lambda-equivalent)
   ├── authz/         Shared authz     – JWT verification + Themis authorize middleware
+  ├── deploy/        K8s umbrella chart – install the whole platform in a cluster (deploy/helm)
   ├── console/       Console          – web console: Go gateway (:8090) + built React SPA
   ├── web/           Console frontend – React + Vite + TypeScript source (builds into console/web/console)
   ├── .gitignore

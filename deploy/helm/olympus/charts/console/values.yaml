@@ -1,0 +1,29 @@
+image:
+  repository: olympus/console
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+port: 8090
+# The console gateway proxies /api/<service>/* to each backend. Hosts resolve
+# to the subchart Services (olympus-<release>-<service>). Empty entries fall
+# back to the in-cluster service names.
+servicePorts:
+  amphora: 8080
+  paramdora: 8083
+  hephaestus: 8084
+  orpheus: 8086
+  clio: 8087
+  mneme: 8088
+  iris: 8089
+  themis: 8091
+  prometheus: 8092
+serviceAccount:
+  create: true
+  name: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

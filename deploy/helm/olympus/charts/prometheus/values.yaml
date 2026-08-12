@@ -1,0 +1,26 @@
+image:
+  repository: olympus/prometheus
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+port: 8092
+dbname: olympus_functions
+# Executor: "mock" (default, no Docker needed) | "docker" (requires a Docker
+# daemon reachable from the pod, e.g. via the host socket).
+provisioner: mock
+# HostPath to the node's Docker daemon socket, mounted into the pod when
+# provisioner=docker. /var/run/docker.sock on most nodes.
+dockerHostSocket: /var/run/docker.sock
+env:
+  - name: PROMETHEUS_IMAGE_PREFIX
+    value: olympus/prometheus-fn
+serviceAccount:
+  create: true
+  name: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi

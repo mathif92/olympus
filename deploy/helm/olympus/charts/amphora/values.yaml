@@ -1,0 +1,22 @@
+image:
+  repository: olympus/olympus
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+port: 8080
+dbname: olympus_storage
+# Storage backend: "minio" (bundled MinIO, default) | "local" | "hybrid"
+storageBackend: minio
+env:
+  - name: MINIO_BUCKET
+    value: olympus
+serviceAccount:
+  create: true
+  name: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

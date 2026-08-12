@@ -1,0 +1,19 @@
+# Provisioner backend: mock (default) | docker (clio/mneme) | kube (orpheus)
+provisioner: mock
+image:
+  repository: olympus/hephaestus
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+port: 8084
+dbname: olympus_compute
+serviceAccount:
+  create: true
+  name: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

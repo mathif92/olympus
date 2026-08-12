@@ -1,0 +1,21 @@
+# Provisioner backend: mock (default) | docker (clio/mneme) | kube (orpheus)
+provisioner: mock
+# HostPath to the node's Docker daemon socket, mounted into the pod when provisioner=docker.
+dockerHostSocket: /var/run/docker.sock
+image:
+  repository: olympus/clio
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 1
+port: 8087
+dbname: olympus_databases
+serviceAccount:
+  create: true
+  name: ""
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

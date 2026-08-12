@@ -1,0 +1,6 @@
+apiVersion: v2
+name: mneme
+description: Paramdora - multi-tenant parameter store with versioning + encryption
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

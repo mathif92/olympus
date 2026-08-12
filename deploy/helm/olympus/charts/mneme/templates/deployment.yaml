@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mneme.fullname" . }}
+  labels:
+    {{- include "mneme.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "mneme.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mneme.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if eq .Values.provisioner "docker" }}
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: {{ .Values.dockerHostSocket }}
+      {{- end }}
+      serviceAccountName: {{ include "mneme.saName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_DSN
+              value: {{ include "mneme.postgresDsn" . | quote }}
+            - name: THEMIS_URL
+              value: {{ include "mneme.themisUrl" . | quote }}
+            - name: THEMIS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-olympus-secrets
+                  key: THEMIS_JWT_SECRET
+            - name: PROVISIONER
+              value: {{ .Values.provisioner | quote }}
+            {{- if eq .Values.provisioner "docker" }}
+            - name: DOCKER_HOST
+              value: {{ printf "unix://%s" .Values.dockerHostSocket | quote }}
+            {{- end }}
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- if eq .Values.provisioner "docker" }}
+          volumeMounts:
+            - name: docker-socket
+              mountPath: {{ .Values.dockerHostSocket }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

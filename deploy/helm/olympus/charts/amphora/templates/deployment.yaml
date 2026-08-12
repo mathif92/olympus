@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "amphora.fullname" . }}
+  labels:
+    {{- include "amphora.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "amphora.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "amphora.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "amphora.saName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.port }}
+              protocol: TCP
+          env:
+            - name: POSTGRES_DSN
+              value: {{ include "amphora.postgresDsn" . | quote }}
+            - name: REDIS_URL
+              value: {{ include "amphora.redisUrl" . | quote }}
+            - name: THEMIS_URL
+              value: {{ include "amphora.themisUrl" . | quote }}
+            - name: THEMIS_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-olympus-secrets
+                  key: THEMIS_JWT_SECRET
+            - name: STORAGE_BACKEND
+              value: {{ .Values.storageBackend | quote }}
+            - name: MINIO_ENDPOINT
+              value: {{ include "amphora.minioEndpoint" . | quote }}
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-olympus-secrets
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-olympus-secrets
+                  key: MINIO_SECRET_KEY
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
